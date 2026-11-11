@@ -10,7 +10,14 @@
 <meta name="apple-mobile-web-app-title" content="Teleprompter">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<title>Teleprompter</title>
+<title>Teleprompter — grave vídeos lendo o roteiro</title>
+<meta name="description" content="Teleprompter gratuito para celular: grave vídeos lendo seu roteiro na tela, em pé ou deitado. Os vídeos ficam só no seu aparelho.">
+<meta name="author" content="Sampaio">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Teleprompter">
+<meta property="og:description" content="Grave vídeos lendo seu roteiro na tela do celular. Gratuito, sem cadastro e sem enviar nada para a internet.">
+<meta property="og:image" content="icon-512.png">
+<meta name="twitter:card" content="summary">
 <style>
   :root{
     --sat: env(safe-area-inset-top, 0px);
@@ -93,6 +100,8 @@
   .overlay.show{display:block}
   #start.show{display:flex}
   #start{flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:16px}
+  #start > h1{margin-top:auto !important}
+  #start{background:#000}
   #start h1{margin:0;font-size:28px}
   #start p{margin:0;opacity:.75;max-width:420px;line-height:1.45}
   .btn{background:#fff;color:#000;font-weight:600;padding:14px 22px;border-radius:14px;font-size:17px}
@@ -213,6 +222,15 @@
   #cfNo{background:#2c2c2e}
   #cfYes{background:var(--red);color:#fff;font-variant-numeric:tabular-nums}
   #cfYes:disabled{opacity:.45}
+  .credits{margin-top:auto;padding-top:20px;font-size:13px;color:#8e8e93;text-align:center;line-height:1.8}
+  .credits b{color:#fff}
+  .credits nav button{color:#8e8e93;text-decoration:underline;font-size:13px;padding:2px}
+  .overlay.doc{z-index:45;background:#0c0c0d}
+  .doc .wrap{max-width:640px;margin:0 auto;line-height:1.55;font-size:15px;color:#ddd}
+  .doc h3{color:#fff;font-size:16px;margin:22px 0 6px}
+  .doc p{margin:0 0 10px}
+  .doc ul{padding-left:20px;margin:0 0 10px}
+  .doc .upd{color:#8e8e93;font-size:13px}
   #reviewActions{display:none}
   #reviewActions.show{display:block}
   #saving{position:fixed;inset:0;z-index:35;display:none;place-items:center;background:rgba(0,0,0,.75);text-align:center;font-size:16px}
@@ -282,6 +300,72 @@
     1. Toque em <b>Compartilhar</b> (quadrado com seta ↑) no Safari<br>
     2. Toque em <b>Adicionar à Tela de Início</b><br>
     3. Abra o <b>Teleprompter</b> pelo ícone que aparecer — ele abre sem as barras do Safari.
+  </div>
+  <footer class="credits">
+    <div>Desenvolvido por <b>Sampaio</b></div>
+    <nav><button data-doc="docTerms">Termos de uso</button> · <button data-doc="docPrivacy">Privacidade</button> · <button data-doc="docAbout">Sobre</button></nav>
+  </footer>
+</div>
+
+<!-- Páginas: Termos / Privacidade / Sobre -->
+<div class="overlay doc" id="docTerms">
+  <div class="wrap">
+    <div class="head"><h2>Termos de uso</h2><button class="done" data-close>Fechar</button></div>
+    <p class="upd">Última atualização: 11 de novembro de 2026</p>
+    <h3>1. O serviço</h3>
+    <p>O Teleprompter é um site gratuito, desenvolvido por Sampaio, que mostra um texto rolando na tela enquanto você grava vídeos com a câmera do seu aparelho. Para usar, não é preciso criar conta nem fazer cadastro.</p>
+    <h3>2. Uso permitido</h3>
+    <p>Você pode usar o Teleprompter para fins pessoais ou profissionais. Você é o único responsável pelo conteúdo que grava, pelos roteiros que escreve e pelo que faz com os vídeos, incluindo o respeito à imagem, à voz e aos direitos de outras pessoas que apareçam neles.</p>
+    <p>Não é permitido usar o serviço para gravar pessoas sem consentimento, para atividades ilegais ou para violar direitos de terceiros.</p>
+    <h3>3. Seus vídeos e textos</h3>
+    <p>Os vídeos e roteiros pertencem a você. Eles ficam guardados <b>somente no seu aparelho</b>, no armazenamento do navegador, e não são enviados para nenhum servidor. Por isso, não temos como acessar, recuperar ou restaurar o seu conteúdo.</p>
+    <p>O navegador ou o sistema do aparelho pode apagar esses dados, por exemplo ao limpar o histórico ou os dados de sites, ao liberar espaço, ou depois de muito tempo sem usar o site. <b>Salve no app Fotos ou em outro lugar os vídeos importantes.</b></p>
+    <h3>4. Sem garantias</h3>
+    <p>O serviço é oferecido "como está", sem garantia de funcionamento contínuo ou sem erros. O funcionamento depende do aparelho, do navegador e das permissões de câmera e microfone. Na máxima extensão permitida pela lei, o desenvolvedor não se responsabiliza por perda de gravações, falhas de gravação ou danos decorrentes do uso.</p>
+    <h3>5. Mudanças</h3>
+    <p>Estes termos e o próprio serviço podem mudar a qualquer momento. A data no topo desta página indica a versão atual.</p>
+    <h3>6. Lei aplicável</h3>
+    <p>Estes termos seguem as leis da República Federativa do Brasil.</p>
+  </div>
+</div>
+
+<div class="overlay doc" id="docPrivacy">
+  <div class="wrap">
+    <div class="head"><h2>Política de privacidade</h2><button class="done" data-close>Fechar</button></div>
+    <p class="upd">Última atualização: 11 de novembro de 2026</p>
+    <h3>Resumo</h3>
+    <p><b>Nada do que você grava ou escreve sai do seu aparelho.</b> Não temos conta de usuário, banco de dados, anúncios ou ferramentas de rastreamento.</p>
+    <h3>Câmera e microfone</h3>
+    <p>O site pede acesso à câmera e ao microfone só para mostrar a imagem e gravar o vídeo. A imagem e o som são processados no seu aparelho. Você pode tirar essa permissão a qualquer momento nos ajustes do navegador. Quando você sai do site, a câmera e o microfone são desligados.</p>
+    <h3>O que fica guardado no seu aparelho</h3>
+    <ul>
+      <li><b>Vídeos gravados e suas miniaturas</b>, no armazenamento do navegador (IndexedDB), para o histórico.</li>
+      <li><b>Roteiro e preferências</b> (velocidade, tamanho da letra, posição da caixa etc.), no armazenamento local do navegador.</li>
+    </ul>
+    <p>Esses dados ficam somente no seu aparelho e não são compartilhados com o desenvolvedor nem com ninguém. Para apagar, delete os vídeos no histórico ou limpe os dados do site nos ajustes do navegador.</p>
+    <h3>Hospedagem</h3>
+    <p>O site é hospedado pela Vercel. Como em qualquer site, o provedor de hospedagem pode registrar dados técnicos de acesso, como endereço IP, navegador e horário, para segurança e funcionamento do serviço, conforme a política de privacidade da própria Vercel. Esses registros não incluem seus vídeos nem seus textos.</p>
+    <h3>Compartilhamento</h3>
+    <p>Quando você toca em "Salvar vídeo", o vídeo vai para o menu de compartilhar do seu aparelho. A partir daí, o destino é escolhido por você e segue as regras do app escolhido.</p>
+    <h3>Seus direitos (LGPD)</h3>
+    <p>Como não coletamos nem armazenamos dados pessoais em servidores, não há dados seus em nosso poder para consultar, corrigir ou excluir. Tudo o que existe está no seu aparelho, sob o seu controle.</p>
+    <h3>Crianças</h3>
+    <p>Menores de idade devem usar o serviço com o acompanhamento dos pais ou responsáveis.</p>
+  </div>
+</div>
+
+<div class="overlay doc" id="docAbout">
+  <div class="wrap">
+    <div class="head"><h2>Sobre</h2><button class="done" data-close>Fechar</button></div>
+    <p>O <b>Teleprompter</b> é uma ferramenta gratuita para gravar vídeos lendo um roteiro, direto pelo navegador do celular, sem instalar nada.</p>
+    <ul>
+      <li>Texto rolando por cima da câmera, com velocidade, tamanho da letra e posição ajustáveis</li>
+      <li>Vídeos em pé (9:16) e deitado (16:9), na qualidade máxima da câmera</li>
+      <li>O texto não aparece no vídeo gravado</li>
+      <li>Histórico de vídeos salvo no próprio aparelho</li>
+      <li>Funciona como app: Compartilhar → Adicionar à Tela de Início</li>
+    </ul>
+    <p>Desenvolvido por <b>Sampaio</b>.</p>
   </div>
 </div>
 
@@ -1221,6 +1305,10 @@
     if (canFS) { goFullscreen(); $('settings').classList.remove('show'); }
     else toast('No iPhone: Compartilhar → Adicionar à Tela de Início, e abra pelo ícone', 5000);
   };
+
+  // ---------- Termos / Privacidade / Sobre ----------
+  document.querySelectorAll('[data-doc]').forEach(b => b.onclick = () => { const d = $(b.dataset.doc); d.scrollTop = 0; d.classList.add('show'); });
+  document.querySelectorAll('.doc [data-close]').forEach(b => b.onclick = () => b.closest('.doc').classList.remove('show'));
 
   // ---------- Início ----------
   renderText(); spdLabel(); setPlaying(false); applyGeo();
