@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#000000">
+<title>Teleprompter</title>
+<style>
+  :root{
+    --sat: env(safe-area-inset-top, 0px);
+    --sab: env(safe-area-inset-bottom, 0px);
+    --sal: env(safe-area-inset-left, 0px);
+    --sar: env(safe-area-inset-right, 0px);
+    --red:#ff3b30;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;background:#000;color:#fff;overflow:hidden;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    -webkit-user-select:none;user-select:none;overscroll-behavior:none}
+  button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+
+  #cam{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;background:#111}
+  #cam.mirror{transform:scaleX(-1)}
+
+  /* ---------- Caixa do texto ---------- */
+  #prompter{position:fixed;display:flex;flex-direction:column;border-radius:16px;
+    background:rgba(0,0,0,var(--bg,.45));overflow:hidden;
+    box-shadow:0 0 0 1px rgba(255,255,255,.12);touch-action:none;z-index:5}
+  #viewport{position:relative;flex:1;overflow:hidden;touch-action:none;
+    -webkit-mask-image:linear-gradient(transparent 0,#000 8%,#000 90%,transparent 100%);
+            mask-image:linear-gradient(transparent 0,#000 8%,#000 90%,transparent 100%)}
+  #text{position:absolute;left:0;right:0;top:0;padding:14px 18px 0;white-space:pre-wrap;
+    word-wrap:break-word;font-weight:600;line-height:1.35;will-change:transform;
+    text-shadow:0 1px 3px rgba(0,0,0,.8)}
+  #text.align-center{text-align:center}
+  #paused{position:absolute;right:10px;top:8px;font-size:12px;padding:3px 8px;border-radius:99px;
+    background:rgba(255,255,255,.18);pointer-events:none}
+  .bar{display:flex;align-items:center;gap:4px;padding:4px 6px;background:rgba(0,0,0,.35)}
+  .bar .grip{width:36px;height:34px;display:grid;place-items:center;touch-action:none;opacity:.85}
+  .bar button{min-width:34px;height:34px;border-radius:8px;display:grid;place-items:center;font-size:18px}
+  .bar button:active{background:rgba(255,255,255,.15)}
+  .bar .spd{font-size:13px;min-width:46px;text-align:center;opacity:.9}
+  .bar .sp{flex:1}
+  svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+  /* ---------- Controles ---------- */
+  #controls{position:fixed;z-index:6;display:flex;align-items:center;justify-content:space-around;
+    left:0;right:0;bottom:0;padding:14px calc(24px + var(--sar)) calc(18px + var(--sab)) calc(24px + var(--sal))}
+  .round{width:52px;height:52px;border-radius:50%;background:rgba(0,0,0,.45);display:grid;place-items:center;
+    backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+  .round svg{width:24px;height:24px}
+  #rec{width:76px;height:76px;border-radius:50%;border:4px solid #fff;display:grid;place-items:center;background:rgba(0,0,0,.2)}
+  #rec i{display:block;width:58px;height:58px;border-radius:50%;background:var(--red);transition:.2s}
+  #rec.on i{width:30px;height:30px;border-radius:7px}
+  @media (orientation:landscape){
+    #controls{left:auto;top:0;bottom:0;right:0;flex-direction:column;
+      padding:calc(16px + var(--sat)) calc(16px + var(--sar)) calc(16px + var(--sab)) 14px}
+  }
+  #timer{position:fixed;z-index:6;top:calc(10px + var(--sat));left:50%;transform:translateX(-50%);
+    background:var(--red);padding:4px 12px;border-radius:8px;font-variant-numeric:tabular-nums;font-weight:600;display:none}
+  #timer.show{display:block}
+  #countdown{position:fixed;inset:0;z-index:20;display:none;place-items:center;font-size:140px;font-weight:700;
+    text-shadow:0 4px 30px rgba(0,0,0,.6);pointer-events:none}
+  #countdown.show{display:grid}
+
+  /* ---------- Telas sobrepostas ---------- */
+  .overlay{position:fixed;inset:0;z-index:30;display:none;background:rgba(0,0,0,.92);
+    padding:calc(20px + var(--sat)) calc(18px + var(--sar)) calc(20px + var(--sab)) calc(18px + var(--sal));overflow:auto;
+    -webkit-user-select:text;user-select:text}
+  .overlay.show{display:block}
+  #start{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:16px}
+  #start h1{margin:0;font-size:28px}
+  #start p{margin:0;opacity:.75;max-width:420px;line-height:1.45}
+  .btn{background:#fff;color:#000;font-weight:600;padding:14px 22px;border-radius:14px;font-size:17px}
+  .btn.ghost{background:rgba(255,255,255,.14);color:#fff}
+  .btn.red{background:var(--red);color:#fff}
+  .err{color:#ff8a80;max-width:440px;line-height:1.45}
+
+  #settings .wrap,#review .wrap{max-width:640px;margin:0 auto}
+  .head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+  .head h2{margin:0;font-size:22px}
+  textarea{width:100%;min-height:34vh;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:#1a1a1a;color:#fff;
+    padding:12px;font:16px/1.45 inherit;resize:vertical}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.1)}
+  .row label{flex:1}
+  .row input[type=range]{flex:1.4;accent-color:#fff}
+  .row output{min-width:44px;text-align:right;opacity:.8;font-variant-numeric:tabular-nums}
+  .row select{background:#1a1a1a;color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:6px 8px;font:inherit}
+  .switch{appearance:none;-webkit-appearance:none;width:50px;height:30px;border-radius:99px;background:#444;position:relative;transition:.2s;flex:none}
+  .switch:checked{background:#34c759}
+  .switch::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:.2s}
+  .switch:checked::after{left:23px}
+  .note{font-size:13px;opacity:.6;line-height:1.45;margin-top:14px}
+  .btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+  .btns .btn{flex:1;min-width:140px}
+
+  #review video{width:100%;max-height:58vh;border-radius:12px;background:#000;display:block}
+  #review .meta{opacity:.65;font-size:14px;margin-top:8px}
+  #toast{position:fixed;left:50%;bottom:calc(110px + var(--sab));transform:translateX(-50%);z-index:40;
+    background:rgba(30,30,30,.95);padding:10px 16px;border-radius:12px;font-size:14px;display:none;max-width:90vw;text-align:center}
+  #toast.show{display:block}
+</style>
+</head>
+<body>
+
+<video id="cam" playsinline autoplay muted></video>
+
+<div id="prompter">
+  <div id="viewport">
+    <div id="text"></div>
+    <div id="paused">pausado · toque p/ rolar</div>
+  </div>
+  <div class="bar">
+    <div class="grip" id="move" title="Mover">
+      <svg viewBox="0 0 24 24"><path d="M12 2v20M2 12h20M12 2l-3 3M12 2l3 3M12 22l-3-3M12 22l3-3M2 12l3-3M2 12l3 3M22 12l-3-3M22 12l-3 3"/></svg>
+    </div>
+    <button id="toTop" title="Voltar ao início"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></button>
+    <span class="sp"></span>
+    <button id="slower" title="Mais devagar">−</button>
+    <span class="spd" id="spdLbl">3</span>
+    <button id="faster" title="Mais rápido">+</button>
+    <span class="sp"></span>
+    <div class="grip" id="resize" title="Redimensionar">
+      <svg viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+    </div>
+  </div>
+</div>
+
+<div id="timer">00:00</div>
+<div id="countdown"></div>
+
+<div id="controls">
+  <button class="round" id="openSettings" title="Ajustes">
+    <svg viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>
+  </button>
+  <button id="rec" title="Gravar"><i></i></button>
+  <button class="round" id="flip" title="Trocar câmera">
+    <svg viewBox="0 0 24 24"><path d="M20 7h-3l-2-3H9L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M9 13a3 3 0 0 1 5-2.2M15 13a3 3 0 0 1-5 2.2M14 9v2h-2M10 17v-2h2"/></svg>
+  </button>
+</div>
+
+<!-- Tela inicial -->
+<div class="overlay show" id="start">
+  <h1>Teleprompter</h1>
+  <p>Grave vídeos lendo seu texto na tela. O texto <b>não aparece</b> no vídeo gravado.</p>
+  <button class="btn" id="startBtn">Ativar câmera e microfone</button>
+  <div class="err" id="startErr"></div>
+</div>
+
+<!-- Ajustes -->
+<div class="overlay" id="settings">
+  <div class="wrap">
+    <div class="head"><h2>Texto e ajustes</h2><button class="btn ghost" id="closeSettings">Pronto</button></div>
+    <textarea id="script" placeholder="Cole ou escreva seu roteiro aqui…"></textarea>
+
+    <div class="row"><label for="speed">Velocidade</label><input type="range" id="speed" min="0.5" max="15" step="0.5"><output id="speedOut"></output></div>
+    <div class="row"><label for="fsize">Tamanho da letra</label><input type="range" id="fsize" min="16" max="72" step="1"><output id="fsizeOut"></output></div>
+    <div class="row"><label for="bgop">Fundo do texto</label><input type="range" id="bgop" min="0" max="0.9" step="0.05"><output id="bgopOut"></output></div>
+    <div class="row"><label for="center">Centralizar texto</label><input type="checkbox" class="switch" id="center"></div>
+    <div class="row"><label for="mirrorText">Espelhar texto (p/ vidro de teleprompter)</label><input type="checkbox" class="switch" id="mirrorText"></div>
+    <div class="row"><label for="autoScroll">Rolar sozinho ao começar a gravar</label><input type="checkbox" class="switch" id="autoScroll"></div>
+    <div class="row"><label for="restartOnRec">Voltar ao início ao gravar</label><input type="checkbox" class="switch" id="restartOnRec"></div>
+    <div class="row"><label for="cd">Contagem regressiva</label>
+      <select id="cd"><option value="0">Sem</option><option value="3">3 s</option><option value="5">5 s</option></select></div>
+    <div class="row"><label for="quality">Qualidade</label>
+      <select id="quality"><option value="720">720p</option><option value="1080">1080p</option><option value="2160">4K (se suportar)</option></select></div>
+
+    <div class="btns">
+      <button class="btn ghost" id="resetBox">Reposicionar caixa do texto</button>
+    </div>
+    <p class="note">Dicas: toque no texto para pausar/continuar; arraste o texto para cima/baixo para ajustar onde está.
+      Use <b>✥</b> para mover a caixa e <b>⤢</b> para mudar o tamanho. A posição é salva separadamente para o celular em pé e deitado.
+      Escolha a orientação antes de começar a gravar.</p>
+  </div>
+</div>
+
+<!-- Revisão -->
+<div class="overlay" id="review">
+  <div class="wrap">
+    <div class="head"><h2>Vídeo gravado</h2></div>
+    <video id="playback" playsinline controls></video>
+    <div class="meta" id="meta"></div>
+    <div class="btns">
+      <button class="btn" id="shareBtn">Salvar na galeria / Compartilhar</button>
+      <button class="btn ghost" id="dlBtn">Baixar arquivo</button>
+    </div>
+    <div class="btns">
+      <button class="btn ghost" id="againBtn">Gravar de novo</button>
+      <button class="btn red" id="discardBtn">Descartar</button>
+    </div>
+    <p class="note">No iPhone: “Salvar na galeria” abre o menu de compartilhar — toque em <b>Salvar Vídeo</b> para ir para o app Fotos.
+      “Baixar arquivo” salva no app Arquivos (pasta Downloads).</p>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const store = {
+    get(k, d){ try{ const v = localStorage.getItem('tp_'+k); return v === null ? d : JSON.parse(v); }catch(e){ return d; } },
+    set(k, v){ try{ localStorage.setItem('tp_'+k, JSON.stringify(v)); }catch(e){} }
+  };
+
+  // ---------- Estado ----------
+  const DEFAULT_TEXT = "Cole aqui o seu roteiro.\n\nToque em ⚙︎ (ajustes) para editar o texto, a velocidade e o tamanho da letra.\n\nToque no texto para pausar ou continuar a rolagem.\n\nAperte o botão vermelho para gravar.";
+  const S = {
+    text: store.get('text', DEFAULT_TEXT),
+    speed: store.get('speed', 3),
+    fsize: store.get('fsize', 30),
+    bgop: store.get('bgop', 0.45),
+    center: store.get('center', false),
+    mirrorText: store.get('mirrorText', false),
+    autoScroll: store.get('autoScroll', true),
+    restartOnRec: store.get('restartOnRec', false),
+    cd: store.get('cd', 3),
+    quality: store.get('quality', 1080),
+    facing: store.get('facing', 'user'),
+  };
+  const DEFAULT_GEO = {
+    portrait:  {x:.04, y:.05, w:.92, h:.38},
+    landscape: {x:.08, y:.04, w:.66, h:.56},
+  };
+  let geo = store.get('geo', JSON.parse(JSON.stringify(DEFAULT_GEO)));
+  const save = k => store.set(k, S[k]);
+
+  // ---------- Elementos ----------
+  const cam = $('cam'), prompter = $('prompter'), viewport = $('viewport'), textEl = $('text');
+  const pausedTag = $('paused');
+
+  // ---------- Toast ----------
+  let toastT;
+  function toast(msg, ms=2600){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'), ms); }
+
+  // ---------- Texto ----------
+  function renderText(){
+    textEl.textContent = S.text;
+    textEl.style.fontSize = S.fsize + 'px';
+    textEl.classList.toggle('align-center', S.center);
+    prompter.style.setProperty('--bg', S.bgop);
+    applyOffset();
+  }
+  function spdLabel(){ $('spdLbl').textContent = S.speed.toFixed(1).replace('.0','') + 'x'; }
+
+  // ---------- Geometria da caixa (em pé / deitado) ----------
+  const orient = () => innerWidth > innerHeight ? 'landscape' : 'portrait';
+  function controlsInset(){
+    // reserva espaço para os botões
+    const c = $('controls').getBoundingClientRect();
+    return orient()==='landscape' ? {r: c.width, b: 0} : {r: 0, b: c.height};
+  }
+  function applyGeo(){
+    const o = orient(), g = geo[o] || DEFAULT_GEO[o];
+    const W = innerWidth, H = innerHeight, ins = controlsInset();
+    const maxW = W - ins.r, maxH = H - ins.b;
+    let w = Math.max(160, Math.min(g.w*W, maxW));
+    let h = Math.max(110, Math.min(g.h*H, maxH));
+    let x = Math.min(Math.max(0, g.x*W), maxW - w);
+    let y = Math.min(Math.max(0, g.y*H), maxH - h);
+    Object.assign(prompter.style, {left:x+'px', top:y+'px', width:w+'px', height:h+'px'});
+  }
+  function storeGeo(){
+    const r = prompter.getBoundingClientRect(), W = innerWidth, H = innerHeight;
+    geo[orient()] = {x:r.left/W, y:r.top/H, w:r.width/W, h:r.height/H};
+    store.set('geo', geo);
+  }
+  function dragHandle(el, onMove){
+    let sx, sy, start;
+    el.addEventListener('pointerdown', e => {
+      e.preventDefault(); e.stopPropagation();
+      el.setPointerCapture(e.pointerId);
+      sx = e.clientX; sy = e.clientY; start = prompter.getBoundingClientRect();
+      const move = ev => onMove(ev.clientX - sx, ev.clientY - sy, start);
+      const up = () => { el.removeEventListener('pointermove', move); el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up); storeGeo(); };
+      el.addEventListener('pointermove', move); el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
+    });
+  }
+  dragHandle($('move'), (dx, dy, s) => {
+    const ins = controlsInset();
+    const x = Math.min(Math.max(0, s.left+dx), innerWidth - ins.r - s.width);
+    const y = Math.min(Math.max(0, s.top+dy), innerHeight - ins.b - s.height);
+    prompter.style.left = x+'px'; prompter.style.top = y+'px';
+  });
+  dragHandle($('resize'), (dx, dy, s) => {
+    const ins = controlsInset();
+    const w = Math.min(Math.max(160, s.width+dx), innerWidth - ins.r - s.left);
+    const h = Math.min(Math.max(110, s.height+dy), innerHeight - ins.b - s.top);
+    prompter.style.width = w+'px'; prompter.style.height = h+'px';
+  });
+  let rT; addEventListener('resize', () => { clearTimeout(rT); rT = setTimeout(applyGeo, 60); applyGeo(); });
+
+  // ---------- Rolagem ----------
+  let offset = 0, playing = false, last = performance.now();
+  function maxOffset(){ return Math.max(0, textEl.offsetHeight - S.fsize*1.35*1.5); }
+  function applyOffset(){
+    offset = Math.min(Math.max(0, offset), maxOffset());
+    textEl.style.transform = `translateY(${-offset}px)` + (S.mirrorText ? ' scaleX(-1)' : '');
+  }
+  function setPlaying(p){ playing = p; pausedTag.style.display = p ? 'none' : 'block'; }
+  function tick(t){
+    const dt = Math.min(0.1, (t - last)/1000); last = t;
+    if (playing){
+      offset += S.speed * S.fsize * 0.33 * dt;
+      if (offset >= maxOffset()){ offset = maxOffset(); setPlaying(false); }
+      applyOffset();
+    }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+
+  // toque = play/pause, arrastar = rolar manualmente
+  (() => {
+    let sy, so, moved, wasPlaying, id = null;
+    viewport.addEventListener('pointerdown', e => {
+      id = e.pointerId; viewport.setPointerCapture(id);
+      sy = e.clientY; so = offset; moved = false; wasPlaying = playing;
+    });
+    viewport.addEventListener('pointermove', e => {
+      if (e.pointerId !== id) return;
+      const dy = e.clientY - sy;
+      if (!moved && Math.abs(dy) > 6){ moved = true; playing = false; }
+      if (moved){ offset = so - dy; applyOffset(); }
+    });
+    const end = e => {
+      if (e.pointerId !== id) return; id = null;
+      if (!moved) setPlaying(!wasPlaying); else setPlaying(wasPlaying);
+    };
+    viewport.addEventListener('pointerup', end);
+    viewport.addEventListener('pointercancel', end);
+  })();
+
+  $('toTop').onclick = () => { offset = 0; applyOffset(); };
+  function changeSpeed(d){ S.speed = Math.min(15, Math.max(0.5, Math.round((S.speed + d)*2)/2)); save('speed'); spdLabel(); syncSettingsUI(); }
+  $('slower').onclick = () => changeSpeed(-0.5);
+  $('faster').onclick = () => changeSpeed(+0.5);
+
+  // ---------- Câmera ----------
+  let stream = null;
+  const QUAL = {720:[1280,720], 1080:[1920,1080], 2160:[3840,2160]};
+  async function startCamera(){
+    if (stream) stream.getTracks().forEach(t => t.stop());
+    const [w,h] = QUAL[S.quality] || QUAL[1080];
+    const portrait = orient() === 'portrait';
+    const video = { facingMode: S.facing, width:{ideal: portrait ? h : w}, height:{ideal: portrait ? w : h}, frameRate:{ideal:30} };
+    const audio = { echoCancellation:true, noiseSuppression:true };
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({video, audio});
+    } catch (e) {
+      // tenta de novo com o mínimo
+      stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:S.facing}, audio:true});
+    }
+    cam.srcObject = stream;
+    cam.classList.toggle('mirror', S.facing === 'user');
+    try { await cam.play(); } catch(e){}
+  }
+
+  let wakeLock = null;
+  async function keepAwake(){ try{ if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); }catch(e){} }
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && stream) keepAwake(); });
+
+  $('startBtn').onclick = async () => {
+    const err = $('startErr'); err.textContent = '';
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+      err.innerHTML = 'Este navegador não liberou a câmera. O site precisa estar aberto por um endereço <b>https://</b> (não funciona abrindo o arquivo direto). No iPhone, use o Safari.';
+      return;
+    }
+    try {
+      await startCamera();
+      $('start').classList.remove('show');
+      keepAwake();
+      applyGeo();
+    } catch (e) {
+      err.textContent = 'Não consegui acessar a câmera: ' + (e.name === 'NotAllowedError' ? 'permissão negada. Libere câmera e microfone nas configurações do navegador e tente de novo.' : (e.message || e.name));
+    }
+  };
+
+  $('flip').onclick = async () => {
+    if (recorder && recorder.state === 'recording') return toast('Pare a gravação para trocar de câmera');
+    S.facing = S.facing === 'user' ? 'environment' : 'user'; save('facing');
+    try { await startCamera(); } catch(e){ toast('Não deu para trocar de câmera'); }
+  };
+
+  // ---------- Gravação ----------
+  let recorder = null, chunks = [], recStart = 0, timerI = null, lastBlob = null, lastUrl = null, lastName = '';
+  function pickMime(){
+    const list = ['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4;codecs=avc1,mp4a','video/mp4',
+                  'video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];
+    if (!window.MediaRecorder) return null;
+    for (const m of list) { try { if (MediaRecorder.isTypeSupported(m)) return m; } catch(e){} }
+    return '';
+  }
+  const fmt = s => String(Math.floor(s/60)).padStart(2,'0') + ':' + String(Math.floor(s%60)).padStart(2,'0');
+
+  function countdown(n){
+    return new Promise(res => {
+      if (!n) return res();
+      const el = $('countdown'); el.classList.add('show'); el.textContent = n;
+      const i = setInterval(() => { n--; if (n <= 0){ clearInterval(i); el.classList.remove('show'); res(); } else el.textContent = n; }, 1000);
+    });
+  }
+
+  let busy = false;
+  $('rec').onclick = async () => {
+    if (busy) return;
+    if (recorder && recorder.state === 'recording'){ recorder.stop(); return; }
+    if (!stream) return;
+    const mime = pickMime();
+    if (mime === null){ toast('Seu navegador não suporta gravação de vídeo'); return; }
+    busy = true;
+    if (S.restartOnRec){ offset = 0; applyOffset(); }
+    setPlaying(false);
+    await countdown(+S.cd);
+    chunks = [];
+    const bps = S.quality >= 2160 ? 20e6 : S.quality >= 1080 ? 8e6 : 4e6;
+    try {
+      recorder = new MediaRecorder(stream, mime ? {mimeType: mime, videoBitsPerSecond: bps} : {videoBitsPerSecond: bps});
+    } catch(e) {
+      recorder = new MediaRecorder(stream);
+    }
+    recorder.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+    recorder.onstop = finishRecording;
+    recorder.start(1000);
+    recStart = Date.now();
+    $('rec').classList.add('on');
+    $('timer').classList.add('show'); $('timer').textContent = '00:00';
+    timerI = setInterval(() => $('timer').textContent = fmt((Date.now()-recStart)/1000), 250);
+    if (S.autoScroll) setPlaying(true);
+    busy = false;
+  };
+
+  function finishRecording(){
+    clearInterval(timerI);
+    $('rec').classList.remove('on'); $('timer').classList.remove('show');
+    setPlaying(false);
+    const type = (recorder.mimeType || chunks[0]?.type || 'video/mp4').split(';')[0];
+    const ext = type.includes('mp4') ? 'mp4' : type.includes('webm') ? 'webm' : 'mp4';
+    lastBlob = new Blob(chunks, {type});
+    if (lastUrl) URL.revokeObjectURL(lastUrl);
+    lastUrl = URL.createObjectURL(lastBlob);
+    const d = new Date(), p = n => String(n).padStart(2,'0');
+    lastName = `teleprompter-${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}.${ext}`;
+    const pb = $('playback'); pb.src = lastUrl;
+    $('meta').textContent = `${fmt((Date.now()-recStart)/1000)} · ${(lastBlob.size/1048576).toFixed(1)} MB · ${ext.toUpperCase()}`;
+    $('review').classList.add('show');
+  }
+
+  $('shareBtn').onclick = async () => {
+    if (!lastBlob) return;
+    const file = new File([lastBlob], lastName, {type: lastBlob.type});
+    if (navigator.canShare && navigator.canShare({files:[file]})){
+      try { await navigator.share({files:[file], title:'Vídeo'}); }
+      catch(e){ if (e.name !== 'AbortError') toast('Não deu para compartilhar. Use “Baixar arquivo”.'); }
+    } else {
+      download();
+    }
+  };
+  function download(){
+    const a = document.createElement('a'); a.href = lastUrl; a.download = lastName;
+    document.body.appendChild(a); a.click(); a.remove();
+    toast('Download iniciado: ' + lastName);
+  }
+  $('dlBtn').onclick = download;
+  function closeReview(){ $('playback').pause(); $('review').classList.remove('show'); }
+  $('againBtn').onclick = () => { closeReview(); offset = 0; applyOffset(); };
+  $('discardBtn').onclick = () => {
+    closeReview(); $('playback').removeAttribute('src');
+    if (lastUrl) URL.revokeObjectURL(lastUrl); lastBlob = null; lastUrl = null;
+    toast('Vídeo descartado');
+  };
+
+  // ---------- Ajustes ----------
+  const ranges = {speed:v=>v+'x', fsize:v=>v+'px', bgop:v=>Math.round(v*100)+'%'};
+  function syncSettingsUI(){
+    $('script').value = S.text;
+    for (const k in ranges){ $(k).value = S[k]; $(k+'Out').textContent = ranges[k](S[k]); }
+    ['center','mirrorText','autoScroll','restartOnRec'].forEach(k => $(k).checked = S[k]);
+    $('cd').value = S.cd; $('quality').value = S.quality;
+  }
+  for (const k in ranges){
+    $(k).addEventListener('input', e => { S[k] = +e.target.value; $(k+'Out').textContent = ranges[k](S[k]); save(k); renderText(); spdLabel(); });
+  }
+  ['center','mirrorText','autoScroll','restartOnRec'].forEach(k => $(k).addEventListener('change', e => { S[k] = e.target.checked; save(k); renderText(); }));
+  $('cd').onchange = e => { S.cd = +e.target.value; save('cd'); };
+  $('quality').onchange = async e => {
+    S.quality = +e.target.value; save('quality');
+    if (stream && !(recorder && recorder.state === 'recording')){ try{ await startCamera(); toast('Qualidade alterada'); }catch(e){ toast('Câmera não suporta essa qualidade'); } }
+  };
+  $('script').addEventListener('input', e => { S.text = e.target.value; save('text'); renderText(); });
+  $('openSettings').onclick = () => {
+    if (recorder && recorder.state === 'recording') return toast('Pare a gravação para abrir os ajustes');
+    setPlaying(false); syncSettingsUI(); $('settings').classList.add('show');
+  };
+  $('closeSettings').onclick = () => { $('settings').classList.remove('show'); renderText(); };
+  $('resetBox').onclick = () => { geo[orient()] = {...DEFAULT_GEO[orient()]}; store.set('geo', geo); applyGeo(); toast('Caixa reposicionada'); };
+
+  // ---------- Início ----------
+  renderText(); spdLabel(); setPlaying(false); applyGeo();
+})();
+</script>
+</body>
+</html>
