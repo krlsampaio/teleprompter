@@ -262,8 +262,7 @@
           <div class="seg" data-key="cd"><button data-v="0">Sem</button><button data-v="3">3 s</button><button data-v="5">5 s</button><button data-v="10">10 s</button></div>
         </div>
         <div class="item">
-          <div class="lbl"><span>Qualidade do vídeo</span></div>
-          <div class="seg" data-key="quality"><button data-v="720">720p</button><button data-v="1080">1080p</button><button data-v="2160">4K</button></div>
+          <div class="lbl"><span>Qualidade do vídeo<small>Sempre a máxima que a câmera permite</small></span><span class="val" id="resOut">—</span></div>
         </div>
         <div class="item">
           <label class="lbl"><span>Rolar texto ao gravar<small>Começa a rolar junto com a gravação</small></span><input type="checkbox" class="switch" id="autoScroll"></label>
@@ -334,7 +333,6 @@
     autoScroll: store.get('autoScroll', true),
     restartOnRec: store.get('restartOnRec', false),
     cd: store.get('cd', 3),
-    quality: store.get('quality', 1080),
     facing: store.get('facing', 'user'),
   };
   const DEFAULT_GEO = {
@@ -467,7 +465,6 @@
 
   // ---------- Câmera ----------
   let stream = null;
-  const QUAL = {720:[1280,720], 1080:[1920,1080], 2160:[3840,2160]};
   // Áudio fica separado: assim a câmera pode reiniciar sem pedir o microfone de novo
   let audioStream = null, needCrop = false;
   function videoDims(){
@@ -487,7 +484,7 @@
       try { audioStream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true, noiseSuppression:true}}); }
       catch(e){ audioStream = null; toast('Sem microfone: o vídeo vai sair sem som'); }
     }
-    const [w,h] = QUAL[S.quality] || QUAL[1080];
+    const w = 3840, h = 2160;   // pede o máximo; o navegador entrega o melhor que a câmera suportar
     const portrait = orient() === 'portrait';
     lastOrient = orient();
     // Tentativas: o iPhone costuma girar sozinho com as medidas "deitadas";
@@ -509,11 +506,41 @@
       vs = cand;
       if (vw && (vh > vw) === portrait){ matched = true; break; }
     }
+    // Se o navegador informar o limite da câmera, tenta subir até ele
+    if (matched){
+      const tr = vs.getVideoTracks()[0];
+      try {
+        const cap = tr.getCapabilities ? tr.getCapabilities() : null;
+        const cur = tr.getSettings();
+        if (cap && cap.width && cap.height && cap.width.max && cap.height.max){
+          const big = Math.max(cap.width.max, cap.height.max), small = Math.min(cap.width.max, cap.height.max);
+          const [cw, ch] = [cam.videoWidth, cam.videoHeight];
+          if (Math.max(cw, ch) < big){
+            const land = (cur.width || cw) >= (cur.height || ch);
+            await tr.applyConstraints({width:{ideal: land ? big : small}, height:{ideal: land ? small : big}, frameRate:{ideal:30}});
+            await new Promise(r => setTimeout(r, 300));
+            const [nw, nh] = await videoDims();
+            if ((nh > nw) !== portrait){
+              await tr.applyConstraints({width:{ideal: cur.width}, height:{ideal: cur.height}, frameRate:{ideal:30}});
+            }
+          }
+        }
+      } catch(e){}
+    }
     needCrop = !matched;   // se o aparelho insistir na orientação errada, o vídeo é recortado na gravação
     stream = new MediaStream([...vs.getVideoTracks(), ...(audioStream ? audioStream.getAudioTracks() : [])]);
     cam.srcObject = vs;
     cam.classList.toggle('mirror', S.facing === 'user');
     try { await cam.play(); } catch(e){}
+    const [fw, fh] = await videoDims();
+    camRes = [fw, fh];
+    const ro = $('resOut'); if (ro) ro.textContent = fw ? resName(fw, fh) : '—';
+  }
+  let camRes = [0,0];
+  function resName(w, h){
+    const m = Math.min(w, h);
+    const tag = m >= 2100 ? '4K' : m >= 1400 ? '2K' : m >= 1060 ? '1080p' : m >= 700 ? '720p' : m + 'p';
+    return `${tag} · ${w}×${h}`;
   }
 
   // Recorte via canvas (só usado se a câmera não girar sozinha)
@@ -591,7 +618,9 @@
     setPlaying(false);
     await countdown(+S.cd);
     chunks = [];
-    const bps = S.quality >= 2160 ? 20e6 : S.quality >= 1080 ? 8e6 : 4e6;
+    // taxa de bits proporcional à resolução real (≈ 4K: 40 Mbps, 1080p: 10 Mbps)
+    const px = (camRes[0] * camRes[1]) || 1920*1080;
+    const bps = Math.round(Math.min(40e6, Math.max(6e6, px * 4.8)));
     const recStream = needCrop && HTMLCanvasElement.prototype.captureStream ? croppedStream() : stream;
     try {
       recorder = new MediaRecorder(recStream, mime ? {mimeType: mime, videoBitsPerSecond: bps} : {videoBitsPerSecond: bps});
@@ -652,7 +681,7 @@
 
   // ---------- Ajustes ----------
   const ranges = {speed:v=>v.toString().replace('.',',')+'x', fsize:v=>v+' px', bgop:v=>Math.round(v*100)+'%'};
-  const SEG = {center:v=>v==='1', cd:v=>+v, quality:v=>+v};
+  const SEG = {center:v=>v==='1', cd:v=>+v};
   const segVal = k => k==='center' ? (S.center?'1':'0') : String(S[k]);
   function fmtDur(sec){ sec = Math.round(sec); return sec < 60 ? sec+' s' : Math.floor(sec/60)+' min '+String(sec%60).padStart(2,'0')+' s'; }
   function updateInfo(){
@@ -689,9 +718,6 @@
     const b = e.target.closest('button'); if (!b) return;
     const k = seg.dataset.key; const old = S[k];
     S[k] = SEG[k](b.dataset.v); save(k); changed();
-    if (k === 'quality' && S[k] !== old && stream && !(recorder && recorder.state === 'recording')){
-      try { await startCamera(); toast('Qualidade: ' + b.textContent); } catch(err){ toast('A câmera não suporta essa qualidade'); }
-    }
   }));
   document.querySelectorAll('.tabs button').forEach(t => t.onclick = () => {
     document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === t));
