@@ -21,7 +21,7 @@
     -webkit-user-select:none;user-select:none;overscroll-behavior:none}
   button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 
-  #cam{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;background:#111}
+  #cam{position:fixed;inset:0;width:100%;height:100%;object-fit:contain;background:#000}
   #cam.mirror{transform:scaleX(-1)}
 
   /* ---------- Caixa do texto ---------- */
@@ -291,7 +291,18 @@
     const h = Math.min(Math.max(110, s.height+dy), innerHeight - ins.b - s.top);
     prompter.style.width = w+'px'; prompter.style.height = h+'px';
   });
-  let rT; addEventListener('resize', () => { clearTimeout(rT); rT = setTimeout(applyGeo, 60); applyGeo(); });
+  // Quando o celular gira: reposiciona a caixa e reinicia a câmera na nova orientação
+  let rT, lastOrient = orient();
+  function onRotate(){
+    applyGeo();
+    const o = orient();
+    if (o === lastOrient || !stream) return;
+    if (recorder && recorder.state === 'recording'){ toast('Gire de volta: a orientação não muda durante a gravação'); return; }
+    lastOrient = o;
+    startCamera().catch(() => toast('Não consegui ajustar a câmera'));
+  }
+  addEventListener('resize', () => { applyGeo(); clearTimeout(rT); rT = setTimeout(onRotate, 350); });
+  addEventListener('orientationchange', () => { clearTimeout(rT); rT = setTimeout(onRotate, 500); });
 
   // ---------- Rolagem ----------
   let offset = 0, playing = false, last = performance.now();
@@ -345,7 +356,9 @@
     if (stream) stream.getTracks().forEach(t => t.stop());
     const [w,h] = QUAL[S.quality] || QUAL[1080];
     const portrait = orient() === 'portrait';
-    const video = { facingMode: S.facing, width:{ideal: portrait ? h : w}, height:{ideal: portrait ? w : h}, frameRate:{ideal:30} };
+    const video = { facingMode: S.facing, width:{ideal: portrait ? h : w}, height:{ideal: portrait ? w : h},
+                    aspectRatio:{ideal: portrait ? h/w : w/h}, frameRate:{ideal:30} };
+    lastOrient = orient();
     const audio = { echoCancellation:true, noiseSuppression:true };
     try {
       stream = await navigator.mediaDevices.getUserMedia({video, audio});
