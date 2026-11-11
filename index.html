@@ -380,15 +380,14 @@
 
     <div id="reviewActions">
       <div class="btns">
-        <button class="btn" id="shareBtn">Salvar na galeria / Compartilhar</button>
-        <button class="btn ghost" id="dlBtn">Baixar arquivo</button>
+        <button class="btn" id="shareBtn">Salvar vídeo</button>
       </div>
       <div class="btns">
         <button class="btn ghost" id="againBtn">Gravar outro</button>
         <button class="btn red" id="discardBtn">Excluir vídeo</button>
       </div>
-      <p class="note">No iPhone: “Salvar na galeria” abre o menu de compartilhar — toque em <b>Salvar Vídeo</b> para ir para o app Fotos.
-        “Baixar arquivo” salva no app Arquivos (pasta Downloads). Os vídeos ficam guardados no histórico até você excluir.</p>
+      <p class="note">Abre o menu do iPhone: toque em <b>Salvar Vídeo</b> para ir para o app Fotos, ou escolha onde enviar.
+        Os vídeos ficam guardados no histórico até você excluir.</p>
     </div>
   </div>
 </div>
@@ -1072,7 +1071,7 @@
       try { await navigator.share({files:[file], title:'Vídeo'}); }
       catch(e){
         if (e.name === 'AbortError') return;
-        toast(lastBlob.size > 500*1048576 ? 'Vídeo grande demais para compartilhar. Use “Baixar arquivo” e depois salve pelo app Arquivos.' : 'Não deu para compartilhar. Use “Baixar arquivo”.', 5000);
+        download();   // se o menu não abrir (ex.: vídeo muito grande), baixa o arquivo
       }
     } else {
       download();
@@ -1083,7 +1082,6 @@
     document.body.appendChild(a); a.click(); a.remove();
     toast('Download iniciado: ' + lastName);
   }
-  $('dlBtn').onclick = download;
   function closeReview(){
     loadToken++;
     const pb = $('playback'); pb.pause(); pb.removeAttribute('src'); pb.load();
