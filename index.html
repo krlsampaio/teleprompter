@@ -443,8 +443,12 @@
 
   // ---------- Rolagem ----------
   let offset = 0, playing = false, last = performance.now();
+  if (window.ResizeObserver) new ResizeObserver(() => applyOffset()).observe(viewport);
   function maxOffset(){ return Math.max(0, textEl.offsetHeight - S.fsize*1.35*1.5); }
   function applyOffset(){
+    // Espaço em branco antes do texto: ele começa na parte de baixo da caixa e sobe rolando
+    const lead = Math.round(viewport.clientHeight * 0.65) + 'px';
+    if (textEl.style.paddingTop !== lead) textEl.style.paddingTop = lead;
     offset = Math.min(Math.max(0, offset), maxOffset());
     textEl.style.transform = `translateY(${-offset}px)` + (S.mirrorText ? ' scaleX(-1)' : '');
   }
