@@ -68,6 +68,18 @@
     #controls{left:auto;top:0;bottom:0;right:0;flex-direction:column;
       padding:calc(16px + var(--sat)) calc(16px + var(--sar)) calc(16px + var(--sab)) 14px}
   }
+  #camopts{position:fixed;z-index:6;left:0;right:0;bottom:calc(118px + var(--sab));display:flex;justify-content:center;align-items:center;gap:10px;pointer-events:none}
+  #camopts > *{pointer-events:auto}
+  .round.sm{width:44px;height:44px}
+  .round.sm svg{width:20px;height:20px}
+  #wideBtn.on{background:rgba(255,255,255,.9);color:#000}
+  .pill{display:flex;gap:2px;background:rgba(0,0,0,.45);border-radius:99px;padding:3px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+  .pill button{min-width:40px;height:38px;padding:0 10px;border-radius:99px;font-size:13px;font-weight:600}
+  .pill button.on{background:rgba(255,255,255,.22);color:#ffd60a}
+  @media (orientation:landscape){
+    #camopts{left:auto;top:0;bottom:0;right:calc(108px + var(--sar));flex-direction:column}
+    .pill{flex-direction:column}
+  }
   #timer{position:fixed;z-index:6;top:calc(10px + var(--sat));left:50%;transform:translateX(-50%);
     background:var(--red);padding:4px 12px;border-radius:8px;font-variant-numeric:tabular-nums;font-weight:600;display:none}
   #timer.show{display:block}
@@ -188,6 +200,12 @@
 <div id="timer">00:00</div>
 <div id="countdown"></div>
 
+<div id="camopts">
+  <div id="lenses" class="pill" style="display:none"></div>
+  <button id="wideBtn" class="round sm" title="Visão ampla">
+    <svg viewBox="0 0 24 24"><path d="M14 4h6v6M10 20H4v-6M20 4l-6 6M4 20l6-6"/></svg>
+  </button>
+</div>
 <div id="controls">
   <button class="round" id="openSettings" title="Ajustes">
     <svg viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>
@@ -340,6 +358,8 @@
     restartOnRec: store.get('restartOnRec', false),
     cd: store.get('cd', 3),
     facing: store.get('facing', 'user'),
+    wide: store.get('wide', true),
+    lens: store.get('lens', {user:null, environment:null}),
   };
   const DEFAULT_GEO = {
     portrait:  {x:.04, y:.05, w:.92, h:.38},
@@ -369,9 +389,10 @@
   // ---------- Geometria da caixa (em pé / deitado) ----------
   const orient = () => innerWidth > innerHeight ? 'landscape' : 'portrait';
   function controlsInset(){
+    const o = $('camopts').getBoundingClientRect();
     // reserva espaço para os botões
     const c = $('controls').getBoundingClientRect();
-    return orient()==='landscape' ? {r: c.width, b: 0} : {r: 0, b: c.height};
+    return orient()==='landscape' ? {r: Math.max(c.width, innerWidth - o.left), b: 0} : {r: 0, b: Math.max(c.height, innerHeight - o.top + 6)};
   }
   function applyGeo(){
     const o = orient(), g = geo[o] || DEFAULT_GEO[o];
@@ -490,21 +511,28 @@
       try { audioStream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true, noiseSuppression:true}}); }
       catch(e){ audioStream = null; toast('Sem microfone: o vídeo vai sair sem som'); }
     }
-    const w = 3840, h = 2160;   // pede o máximo; o navegador entrega o melhor que a câmera suportar
     const portrait = orient() === 'portrait';
     lastOrient = orient();
-    // Tentativas: o iPhone costuma girar sozinho com as medidas "deitadas";
-    // outros aparelhos precisam das medidas trocadas.
+    // "Visão ampla" usa o formato 4:3 (o sensor inteiro, igual ao modo Foto); o normal usa 16:9 (vídeo)
+    const [w, h] = S.wide ? [4032, 3024] : [3840, 2160];
+    const ar = w / h;
+    const lensId = S.lens[S.facing];
+    const base = lensId ? {deviceId:{exact: lensId}} : {facingMode: S.facing};
+    // Tentativas: o iPhone costuma girar sozinho com as medidas "deitadas"; outros aparelhos precisam trocadas.
     const tries = [
+      {width:{ideal:w}, height:{ideal:h}, aspectRatio:{ideal:ar}},
+      {width:{ideal:h}, height:{ideal:w}, aspectRatio:{ideal:1/ar}},
       {width:{ideal:w}, height:{ideal:h}},
-      {width:{ideal:h}, height:{ideal:w}},
       {}
     ];
     let vs = null, matched = false;
     for (let i = 0; i < tries.length; i++){
       let cand;
-      try { cand = await navigator.mediaDevices.getUserMedia({video:{facingMode:S.facing, frameRate:{ideal:30}, ...tries[i]}}); }
-      catch(e){ if (i === tries.length-1 && !vs) throw e; continue; }
+      try { cand = await navigator.mediaDevices.getUserMedia({video:{...base, frameRate:{ideal:30}, ...tries[i]}}); }
+      catch(e){
+        if (lensId && i === 0){ S.lens[S.facing] = null; store.set('lens', S.lens); return startCamera(); } // lente sumiu
+        if (i === tries.length-1 && !vs) throw e; continue;
+      }
       cam.srcObject = null; cam.srcObject = cand;
       try { await cam.play(); } catch(e){}
       const [vw, vh] = await videoDims();
@@ -512,32 +540,34 @@
       vs = cand;
       if (vw && (vh > vw) === portrait){ matched = true; break; }
     }
-    // Se o navegador informar o limite da câmera, tenta subir até ele
+    const tr = vs.getVideoTracks()[0];
+    // Se o navegador informar o limite da câmera, tenta subir até ele (mantendo o formato)
     if (matched){
-      const tr = vs.getVideoTracks()[0];
       try {
         const cap = tr.getCapabilities ? tr.getCapabilities() : null;
         const cur = tr.getSettings();
         if (cap && cap.width && cap.height && cap.width.max && cap.height.max){
-          const big = Math.max(cap.width.max, cap.height.max), small = Math.min(cap.width.max, cap.height.max);
           const [cw, ch] = [cam.videoWidth, cam.videoHeight];
-          if (Math.max(cw, ch) < big){
-            const land = (cur.width || cw) >= (cur.height || ch);
-            await tr.applyConstraints({width:{ideal: land ? big : small}, height:{ideal: land ? small : big}, frameRate:{ideal:30}});
+          const land = cw >= ch;
+          const long = Math.max(cap.width.max, cap.height.max);
+          const nl = long, ns = Math.round(long / ar);
+          if (Math.max(cw, ch) < nl){
+            await tr.applyConstraints({width:{ideal: land ? nl : ns}, height:{ideal: land ? ns : nl}, aspectRatio:{ideal: land ? ar : 1/ar}, frameRate:{ideal:30}});
             await new Promise(r => setTimeout(r, 300));
             const [nw, nh] = await videoDims();
-            if ((nh > nw) !== portrait){
-              await tr.applyConstraints({width:{ideal: cur.width}, height:{ideal: cur.height}, frameRate:{ideal:30}});
-            }
+            if ((nh > nw) !== portrait) await tr.applyConstraints({width:{ideal: cur.width}, height:{ideal: cur.height}, frameRate:{ideal:30}});
           }
         }
       } catch(e){}
     }
-    // Garante o zoom mínimo (lente mais aberta), quando o navegador permitir
+    // Zoom: visão ampla = o mais afastado possível
+    zoomCap = null;
     try {
-      const tr = vs.getVideoTracks()[0];
       const cap = tr.getCapabilities ? tr.getCapabilities() : null;
-      if (cap && cap.zoom && typeof cap.zoom.min === 'number') await tr.applyConstraints({advanced:[{zoom: cap.zoom.min}]});
+      if (cap && cap.zoom && typeof cap.zoom.min === 'number' && cap.zoom.max > cap.zoom.min){
+        zoomCap = cap.zoom;
+        if (S.wide) await tr.applyConstraints({advanced:[{zoom: cap.zoom.min}]});
+      }
     } catch(e){}
     needCrop = !matched;   // se o aparelho insistir na orientação errada, o vídeo é recortado na gravação
     stream = new MediaStream([...vs.getVideoTracks(), ...(audioStream ? audioStream.getAudioTracks() : [])]);
@@ -548,7 +578,47 @@
     const [fw, fh] = await videoDims();
     camRes = [fw, fh];
     const ro = $('resOut'); if (ro) ro.textContent = fw ? resName(fw, fh) : '—';
+    $('wideBtn').classList.toggle('on', S.wide);
+    refreshLenses(tr);
   }
+
+  // ---------- Lentes (ultra-angular, tele…) ----------
+  let zoomCap = null;
+  function lensName(label){
+    const l = label.toLowerCase();
+    if (/ultra/.test(l)) return '0.5x';
+    if (/tele/.test(l)) return 'Tele';
+    if (/dupla|dual|tripla|triple/.test(l)) return 'Auto';
+    if (/front|frontal|user|selfie/.test(l)) return 'Frontal';
+    if (/back|traseira|rear|environment/.test(l)) return '1x';
+    return label.slice(0, 10) || 'Câmera';
+  }
+  const isFront = l => /front|frontal|user|selfie|facetime|truedepth/i.test(l);
+  async function refreshLenses(tr){
+    const box = $('lenses'); box.innerHTML = '';
+    let devs = [];
+    try { devs = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'videoinput' && d.label); } catch(e){}
+    const mine = devs.filter(d => isFront(d.label) === (S.facing === 'user'));
+    const curId = tr.getSettings().deviceId;
+    if (mine.length > 1){
+      const order = {'0.5x':0, 'Auto':1, '1x':2, 'Frontal':2, 'Tele':3};
+      mine.sort((a,b) => (order[lensName(a.label)] ?? 9) - (order[lensName(b.label)] ?? 9));
+      const seen = new Set();
+      for (const d of mine){
+        const name = lensName(d.label); if (seen.has(name)) continue; seen.add(name);
+        const b = document.createElement('button'); b.textContent = name; b.title = d.label;
+        if (d.deviceId === curId) b.classList.add('on');
+        b.onclick = async () => {
+          if (recorder && recorder.state === 'recording') return toast('Pare a gravação para trocar de lente');
+          S.lens[S.facing] = d.deviceId; store.set('lens', S.lens);
+          try { await startCamera(); toast(d.label); } catch(e){ toast('Não deu para usar essa lente'); }
+        };
+        box.appendChild(b);
+      }
+    }
+    box.style.display = box.children.length ? '' : 'none';
+  }
+
   let camRes = [0,0];
   function resName(w, h){
     const m = Math.min(w, h);
@@ -560,8 +630,9 @@
   let cropRAF = null;
   function croppedStream(){
     const vw = cam.videoWidth, vh = cam.videoHeight, portrait = orient() === 'portrait';
-    const tw = portrait ? Math.round(Math.min(vw, vh) * 9/16) : Math.min(vw, vh*16/9);
-    const th = portrait ? Math.min(vw, vh) : Math.round(tw * 9/16);
+    const pr = S.wide ? 3/4 : 9/16;   // largura/altura do vídeo em pé
+    const tw = portrait ? Math.min(vw, Math.round(vh * pr)) : vw;
+    const th = portrait ? vh : Math.min(vh, Math.round(vw * pr));
     const c = document.createElement('canvas'); c.width = tw & ~1; c.height = th & ~1;
     const ctx = c.getContext('2d');
     const sx = (vw - c.width)/2, sy = (vh - c.height)/2;
@@ -598,6 +669,12 @@
     if (recorder && recorder.state === 'recording') return toast('Pare a gravação para trocar de câmera');
     S.facing = S.facing === 'user' ? 'environment' : 'user'; save('facing');
     try { await startCamera(); } catch(e){ toast('Não deu para trocar de câmera'); }
+  };
+
+  $('wideBtn').onclick = async () => {
+    if (recorder && recorder.state === 'recording') return toast('Pare a gravação para mudar a visão');
+    S.wide = !S.wide; save('wide');
+    try { await startCamera(); toast(S.wide ? 'Visão ampla (4:3)' : 'Visão normal (16:9)'); } catch(e){ toast('Não deu para mudar a visão'); }
   };
 
   // ---------- Gravação ----------
