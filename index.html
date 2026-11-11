@@ -28,7 +28,11 @@
   #cam{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;background:#000}
   #cam.mirror{transform:scaleX(-1)}
   /* Em pé a tela do celular é mais comprida que o vídeo: mostra o quadro inteiro, sem cortar (sem "zoom") */
-  @media (orientation:portrait){ #cam{object-fit:contain} }
+  /* Em pé, igual ao app Câmera do iPhone: imagem inteira colada no topo e a área preta embaixo para os botões */
+  @media (orientation:portrait){
+    #cam{object-fit:contain;object-position:center top;top:var(--sat);height:calc(100% - var(--sat))}
+    #cam.crop{object-fit:cover;top:0;height:100%}
+  }
 
   /* ---------- Caixa do texto ---------- */
   #prompter{position:fixed;display:flex;flex-direction:column;border-radius:16px;
@@ -539,6 +543,7 @@
     stream = new MediaStream([...vs.getVideoTracks(), ...(audioStream ? audioStream.getAudioTracks() : [])]);
     cam.srcObject = vs;
     cam.classList.toggle('mirror', S.facing === 'user');
+    cam.classList.toggle('crop', needCrop);
     try { await cam.play(); } catch(e){}
     const [fw, fh] = await videoDims();
     camRes = [fw, fh];
