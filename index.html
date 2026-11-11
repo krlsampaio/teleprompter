@@ -72,7 +72,6 @@
   #camopts > *{pointer-events:auto}
   .round.sm{width:44px;height:44px}
   .round.sm svg{width:20px;height:20px}
-  #wideBtn.on{background:rgba(255,255,255,.9);color:#000}
   .pill{display:flex;gap:2px;background:rgba(0,0,0,.45);border-radius:99px;padding:3px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
   .pill button{min-width:40px;height:38px;padding:0 10px;border-radius:99px;font-size:13px;font-weight:600}
   .pill button.on{background:rgba(255,255,255,.22);color:#ffd60a}
@@ -202,9 +201,6 @@
 
 <div id="camopts">
   <div id="lenses" class="pill" style="display:none"></div>
-  <button id="wideBtn" class="round sm" title="Visão ampla">
-    <svg viewBox="0 0 24 24"><path d="M14 4h6v6M10 20H4v-6M20 4l-6 6M4 20l6-6"/></svg>
-  </button>
 </div>
 <div id="controls">
   <button class="round" id="openSettings" title="Ajustes">
@@ -358,7 +354,7 @@
     restartOnRec: store.get('restartOnRec', false),
     cd: store.get('cd', 3),
     facing: store.get('facing', 'user'),
-    wide: store.get('wide', true),
+    wide: false,  // sempre 16:9
     lens: store.get('lens', {user:null, environment:null}),
   };
   const DEFAULT_GEO = {
@@ -513,8 +509,8 @@
     }
     const portrait = orient() === 'portrait';
     lastOrient = orient();
-    // "Visão ampla" usa o formato 4:3 (o sensor inteiro, igual ao modo Foto); o normal usa 16:9 (vídeo)
-    const [w, h] = S.wide ? [4032, 3024] : [3840, 2160];
+    // Formato 16:9 (vídeo), na maior resolução que a câmera permitir
+    const [w, h] = [3840, 2160];
     const ar = w / h;
     const lensId = S.lens[S.facing];
     const base = lensId ? {deviceId:{exact: lensId}} : {facingMode: S.facing};
@@ -566,7 +562,7 @@
       const cap = tr.getCapabilities ? tr.getCapabilities() : null;
       if (cap && cap.zoom && typeof cap.zoom.min === 'number' && cap.zoom.max > cap.zoom.min){
         zoomCap = cap.zoom;
-        if (S.wide) await tr.applyConstraints({advanced:[{zoom: cap.zoom.min}]});
+        await tr.applyConstraints({advanced:[{zoom: cap.zoom.min}]});
       }
     } catch(e){}
     needCrop = !matched;   // se o aparelho insistir na orientação errada, o vídeo é recortado na gravação
@@ -578,7 +574,6 @@
     const [fw, fh] = await videoDims();
     camRes = [fw, fh];
     const ro = $('resOut'); if (ro) ro.textContent = fw ? resName(fw, fh) : '—';
-    $('wideBtn').classList.toggle('on', S.wide);
     refreshLenses(tr);
   }
 
@@ -669,12 +664,6 @@
     if (recorder && recorder.state === 'recording') return toast('Pare a gravação para trocar de câmera');
     S.facing = S.facing === 'user' ? 'environment' : 'user'; save('facing');
     try { await startCamera(); } catch(e){ toast('Não deu para trocar de câmera'); }
-  };
-
-  $('wideBtn').onclick = async () => {
-    if (recorder && recorder.state === 'recording') return toast('Pare a gravação para mudar a visão');
-    S.wide = !S.wide; save('wide');
-    try { await startCamera(); toast(S.wide ? 'Visão ampla (4:3)' : 'Visão normal (16:9)'); } catch(e){ toast('Não deu para mudar a visão'); }
   };
 
   // ---------- Gravação ----------
