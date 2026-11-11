@@ -632,7 +632,30 @@
 
   let wakeLock = null;
   async function keepAwake(){ try{ if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); }catch(e){} }
-  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && stream) keepAwake(); });
+  // Ao sair do Safari (ou trocar de aba): desliga câmera e microfone. Ao voltar: liga de novo.
+  let camWasOn = false;
+  function releaseCamera(){
+    if (!stream && !audioStream) return;
+    camWasOn = true;
+    if (recorder && recorder.state === 'recording'){ try { recorder.stop(); } catch(e){} } // salva o que já foi gravado
+    if (stream) stream.getTracks().forEach(t => t.stop());
+    if (audioStream) audioStream.getTracks().forEach(t => t.stop());
+    if (cam.srcObject) cam.srcObject.getTracks().forEach(t => t.stop());
+    cam.srcObject = null; stream = null; audioStream = null;
+    if (wakeLock){ try { wakeLock.release(); } catch(e){} wakeLock = null; }
+  }
+  async function resumeCamera(){
+    if (!camWasOn || stream) return;
+    camWasOn = false;
+    try { await startCamera(); keepAwake(); }
+    catch(e){ camWasOn = true; toast('Toque na tela para religar a câmera'); }
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') releaseCamera(); else resumeCamera();
+  });
+  addEventListener('pagehide', releaseCamera);
+  addEventListener('pageshow', () => { if (document.visibilityState === 'visible') resumeCamera(); });
+  document.addEventListener('pointerdown', () => { if (camWasOn && document.visibilityState === 'visible') resumeCamera(); }, true);
 
   $('startBtn').onclick = async () => {
     const err = $('startErr'); err.textContent = '';
