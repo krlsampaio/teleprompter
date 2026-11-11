@@ -537,25 +537,6 @@
       if (vw && (vh > vw) === portrait){ matched = true; break; }
     }
     const tr = vs.getVideoTracks()[0];
-    // Se o navegador informar o limite da câmera, tenta subir até ele (mantendo o formato)
-    if (matched){
-      try {
-        const cap = tr.getCapabilities ? tr.getCapabilities() : null;
-        const cur = tr.getSettings();
-        if (cap && cap.width && cap.height && cap.width.max && cap.height.max){
-          const [cw, ch] = [cam.videoWidth, cam.videoHeight];
-          const land = cw >= ch;
-          const long = Math.max(cap.width.max, cap.height.max);
-          const nl = long, ns = Math.round(long / ar);
-          if (Math.max(cw, ch) < nl){
-            await tr.applyConstraints({width:{ideal: land ? nl : ns}, height:{ideal: land ? ns : nl}, aspectRatio:{ideal: land ? ar : 1/ar}, frameRate:{ideal:30}});
-            await new Promise(r => setTimeout(r, 300));
-            const [nw, nh] = await videoDims();
-            if ((nh > nw) !== portrait) await tr.applyConstraints({width:{ideal: cur.width}, height:{ideal: cur.height}, frameRate:{ideal:30}});
-          }
-        }
-      } catch(e){}
-    }
     // Zoom: visão ampla = o mais afastado possível
     zoomCap = null;
     try {
@@ -565,17 +546,27 @@
         await tr.applyConstraints({advanced:[{zoom: cap.zoom.min}]});
       }
     } catch(e){}
-    needCrop = !matched;   // se o aparelho insistir na orientação errada, o vídeo é recortado na gravação
     stream = new MediaStream([...vs.getVideoTracks(), ...(audioStream ? audioStream.getAudioTracks() : [])]);
     cam.srcObject = vs;
     cam.classList.toggle('mirror', S.facing === 'user');
-    cam.classList.toggle('crop', needCrop);
     try { await cam.play(); } catch(e){}
+    await new Promise(r => setTimeout(r, 250));
     const [fw, fh] = await videoDims();
     camRes = [fw, fh];
+    checkFit();
     const ro = $('resOut'); if (ro) ro.textContent = fw ? resName(fw, fh) : '—';
     refreshLenses(tr);
   }
+
+  // Confere se o vídeo está na mesma orientação da tela; se não, recorta (na tela e na gravação)
+  function checkFit(){
+    if (recorder && recorder.state === 'recording') return;
+    const vw = cam.videoWidth, vh = cam.videoHeight;
+    if (!vw || !vh) return;
+    needCrop = (vh > vw) !== (orient() === 'portrait');
+    cam.classList.toggle('crop', needCrop);
+  }
+  cam.addEventListener('resize', checkFit);
 
   // ---------- Lentes (ultra-angular, tele…) ----------
   let zoomCap = null;
