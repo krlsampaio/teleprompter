@@ -27,6 +27,8 @@
 
   #cam{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;background:#000}
   #cam.mirror{transform:scaleX(-1)}
+  /* Em pé a tela do celular é mais comprida que o vídeo: mostra o quadro inteiro, sem cortar (sem "zoom") */
+  @media (orientation:portrait){ #cam{object-fit:contain} }
 
   /* ---------- Caixa do texto ---------- */
   #prompter{position:fixed;display:flex;flex-direction:column;border-radius:16px;
@@ -527,6 +529,12 @@
         }
       } catch(e){}
     }
+    // Garante o zoom mínimo (lente mais aberta), quando o navegador permitir
+    try {
+      const tr = vs.getVideoTracks()[0];
+      const cap = tr.getCapabilities ? tr.getCapabilities() : null;
+      if (cap && cap.zoom && typeof cap.zoom.min === 'number') await tr.applyConstraints({advanced:[{zoom: cap.zoom.min}]});
+    } catch(e){}
     needCrop = !matched;   // se o aparelho insistir na orientação errada, o vídeo é recortado na gravação
     stream = new MediaStream([...vs.getVideoTracks(), ...(audioStream ? audioStream.getAudioTracks() : [])]);
     cam.srcObject = vs;
