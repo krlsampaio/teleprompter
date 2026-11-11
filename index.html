@@ -200,6 +200,19 @@
   .loadbox .row1 b{color:#fff;font-variant-numeric:tabular-nums}
   .bar2{height:8px;border-radius:99px;background:#3a3a3c;overflow:hidden}
   .bar2 i{display:block;height:100%;width:0;background:#34c759;border-radius:99px;transition:width .2s}
+  #confirm{position:fixed;inset:0;z-index:50;display:none;place-items:center;background:rgba(0,0,0,.6);padding:24px;
+    backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+  #confirm.show{display:grid}
+  #confirm .card{width:100%;max-width:320px;background:#1c1c1e;border-radius:18px;padding:22px 20px 16px;text-align:center}
+  #confirm .card .ic{width:52px;height:52px;border-radius:50%;background:rgba(255,69,58,.15);color:#ff453a;display:grid;place-items:center;margin:0 auto 12px}
+  #confirm .card .ic svg{width:26px;height:26px}
+  #confirm h3{margin:0 0 6px;font-size:18px}
+  #confirm p{margin:0 0 18px;color:#8e8e93;font-size:14px;line-height:1.4}
+  #confirm .acts{display:flex;gap:10px}
+  #confirm .acts button{flex:1;padding:13px;border-radius:12px;font-size:16px;font-weight:600}
+  #cfNo{background:#2c2c2e}
+  #cfYes{background:var(--red);color:#fff;font-variant-numeric:tabular-nums}
+  #cfYes:disabled{opacity:.45}
   #reviewActions{display:none}
   #reviewActions.show{display:block}
   #saving{position:fixed;inset:0;z-index:35;display:none;place-items:center;background:rgba(0,0,0,.75);text-align:center;font-size:16px}
@@ -384,7 +397,7 @@
       </div>
       <div class="btns">
         <button class="btn ghost" id="againBtn">Gravar outro</button>
-        <button class="btn red" id="discardBtn">Excluir vídeo</button>
+        <button class="btn red" id="discardBtn">Deletar vídeo</button>
       </div>
       <p class="note">Abre o menu do iPhone: toque em <b>Salvar Vídeo</b> para ir para o app Fotos, ou escolha onde enviar.
         Os vídeos ficam guardados no histórico até você excluir.</p>
@@ -393,6 +406,14 @@
 </div>
 
 <div id="saving"><div><div class="spin"></div><div id="savingTxt">Salvando vídeo…</div></div></div>
+<div id="confirm">
+  <div class="card">
+    <div class="ic"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></div>
+    <h3>Você tem certeza que deseja deletar esse vídeo?</h3>
+    <p>Essa ação não pode ser desfeita.</p>
+    <div class="acts"><button id="cfNo">Cancelar</button><button id="cfYes" disabled>Deletar (5)</button></div>
+  </div>
+</div>
 <div id="toast"></div>
 
 <script>
@@ -994,6 +1015,25 @@
     setTimeout(() => { if (!done && token === loadToken && lastBlob) ready(); }, 10000);   // nunca fica preso
   }
 
+  // Confirmação de exclusão com contador de 5 segundos
+  function confirmDelete(){
+    return new Promise(res => {
+      const box = $('confirm'), yes = $('cfYes'), no = $('cfNo');
+      let n = 5;
+      yes.disabled = true; yes.textContent = `Deletar (${n})`;
+      box.classList.add('show');
+      const t = setInterval(() => {
+        n--;
+        if (n > 0) yes.textContent = `Deletar (${n})`;
+        else { clearInterval(t); yes.disabled = false; yes.textContent = 'Deletar'; }
+      }, 1000);
+      const end = ok => { clearInterval(t); box.classList.remove('show'); yes.onclick = no.onclick = box.onclick = null; res(ok); };
+      yes.onclick = () => { if (!yes.disabled) end(true); };
+      no.onclick = () => end(false);
+      box.onclick = e => { if (e.target === box) end(false); };
+    });
+  }
+
   // ---------- Histórico ----------
   async function refreshHistBtn(){
     let list = [];
@@ -1025,12 +1065,11 @@
       info.append(t, sm);
       const del = document.createElement('button'); del.className = 'del'; del.title = 'Excluir';
       del.innerHTML = '<svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>';
-      let arm = null;
       del.onclick = async e => {
         e.stopPropagation();
-        if (!arm){ del.classList.add('warn'); del.textContent = 'Excluir?'; arm = setTimeout(() => { arm = null; del.classList.remove('warn'); del.innerHTML = '<svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>'; }, 2500); return; }
-        clearTimeout(arm);
+        if (!(await confirmDelete())) return;
         try { await RecDB.remove(m.sid); } catch(err){}
+        toast('Vídeo deletado');
         openHistory();
       };
       row.append(th, info, del);
@@ -1091,16 +1130,13 @@
   }
   $('closeReview').onclick = closeReview;
   $('againBtn').onclick = () => { closeReview(); $('history').classList.remove('show'); offset = 0; applyOffset(); };
-  let delArm = null;
   $('discardBtn').onclick = async () => {
-    const b = $('discardBtn');
-    if (!delArm){ b.textContent = 'Toque de novo para excluir'; delArm = setTimeout(() => { delArm = null; b.textContent = 'Excluir vídeo'; }, 2500); return; }
-    clearTimeout(delArm); delArm = null; b.textContent = 'Excluir vídeo';
+    if (!(await confirmDelete())) return;
     const sid = current && current.sid;
     closeReview();
     if (sid){ try { await RecDB.remove(sid); } catch(e){} }
     refreshHistBtn();
-    toast('Vídeo excluído');
+    toast('Vídeo deletado');
   };
 
   // ---------- Ajustes ----------
