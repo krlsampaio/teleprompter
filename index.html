@@ -87,21 +87,63 @@
   .tip b{white-space:nowrap}
   html,body{height:100%;min-height:-webkit-fill-available}
 
-  #settings .wrap,#review .wrap{max-width:640px;margin:0 auto}
+  #review .wrap{max-width:640px;margin:0 auto}
   .head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
   .head h2{margin:0;font-size:22px}
-  textarea{width:100%;min-height:34vh;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:#1a1a1a;color:#fff;
-    padding:12px;font:16px/1.45 inherit;resize:vertical}
-  .row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.1)}
-  .row label{flex:1}
-  .row input[type=range]{flex:1.4;accent-color:#fff}
-  .row output{min-width:44px;text-align:right;opacity:.8;font-variant-numeric:tabular-nums}
-  .row select{background:#1a1a1a;color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:6px 8px;font:inherit}
-  .switch{appearance:none;-webkit-appearance:none;width:50px;height:30px;border-radius:99px;background:#444;position:relative;transition:.2s;flex:none}
-  .switch:checked{background:#34c759}
-  .switch::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:.2s}
-  .switch:checked::after{left:23px}
   .note{font-size:13px;opacity:.6;line-height:1.45;margin-top:14px}
+
+  /* ---------- Ajustes ---------- */
+  #settings{padding:0;background:#0c0c0d}
+  #settings .top{position:sticky;top:0;z-index:2;background:rgba(12,12,13,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+    padding:calc(12px + var(--sat)) calc(16px + var(--sar)) 12px calc(16px + var(--sal))}
+  #settings .top .line{display:flex;align-items:center;justify-content:space-between;max-width:640px;margin:0 auto 12px}
+  #settings .top h2{margin:0;font-size:20px}
+  .done{background:#fff;color:#000;font-weight:600;padding:8px 18px;border-radius:99px;font-size:15px}
+  #settings .body{max-width:640px;margin:0 auto;padding:4px calc(16px + var(--sar)) calc(30px + var(--sab)) calc(16px + var(--sal))}
+  .tabs{display:flex;background:#1c1c1e;border-radius:10px;padding:3px;max-width:640px;margin:0 auto}
+  .tabs button{flex:1;padding:8px;border-radius:8px;font-size:15px;font-weight:500;color:#aaa}
+  .tabs button.on{background:#3a3a3c;color:#fff}
+  .pane{display:none}.pane.on{display:block}
+
+  textarea{width:100%;height:calc(100dvh - 250px);min-height:200px;border-radius:14px;border:0;background:#1c1c1e;color:#fff;
+    padding:16px;font-family:inherit;font-size:17px;line-height:1.5;resize:none;outline:none}
+  .scriptbar{display:flex;align-items:center;gap:8px;margin-top:10px}
+  .scriptbar .info{flex:1;font-size:14px;color:#999}
+  .chip{background:#1c1c1e;padding:8px 14px;border-radius:99px;font-size:14px}
+  .chip.warn{background:var(--red)}
+
+  .group-t{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:#8e8e93;margin:22px 4px 8px}
+  .group{background:#1c1c1e;border-radius:14px;overflow:hidden}
+  .item{padding:13px 16px;border-bottom:1px solid #2c2c2e}
+  .item:last-child{border-bottom:0}
+  .item .lbl{display:flex;justify-content:space-between;align-items:center;gap:12px}
+  .item .lbl span{font-size:16px}
+  .item .lbl small{display:block;font-size:13px;color:#8e8e93;margin-top:2px}
+  .item .val{color:#8e8e93;font-variant-numeric:tabular-nums;font-size:15px}
+  .slide{display:flex;align-items:center;gap:12px;margin-top:10px}
+  .slide input{flex:1;accent-color:#fff;height:28px}
+  .slide .ic{color:#8e8e93;font-size:13px;min-width:18px;text-align:center}
+  .slide .ic.big{font-size:20px}
+  .step{width:34px;height:34px;border-radius:50%;background:#2c2c2e;font-size:20px;display:grid;place-items:center;flex:none}
+  .seg{display:flex;background:#2c2c2e;border-radius:9px;padding:2px;margin-top:10px}
+  .seg button{flex:1;padding:7px 4px;border-radius:7px;font-size:14px;color:#bbb}
+  .seg button.on{background:#636366;color:#fff}
+  .item.link{display:flex;justify-content:space-between;align-items:center;font-size:16px;width:100%;text-align:left}
+  .item.link::after{content:"›";color:#636366;font-size:22px;line-height:1}
+  .switch{appearance:none;-webkit-appearance:none;width:51px;height:31px;border-radius:99px;background:#39393d;position:relative;transition:.2s;flex:none}
+  .switch:checked{background:#34c759}
+  .switch::after{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 2px 4px rgba(0,0,0,.3)}
+  .switch:checked::after{left:22px}
+
+  .preview{border-radius:14px;overflow:hidden;height:120px;position:relative;
+    background:linear-gradient(135deg,#4a5568,#2d3748 50%,#1a202c)}
+  .preview div{position:absolute;inset:0;padding:12px 16px;font-weight:600;line-height:1.35;overflow:hidden;
+    background:rgba(0,0,0,var(--bg,.45));text-shadow:0 1px 3px rgba(0,0,0,.8);white-space:pre-wrap}
+  details.help{margin-top:22px;background:#1c1c1e;border-radius:14px;padding:13px 16px;font-size:15px}
+  details.help summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between}
+  details.help summary::after{content:"+";color:#8e8e93;font-size:20px;line-height:1}
+  details.help[open] summary::after{content:"−"}
+  details.help ul{margin:10px 0 2px;padding-left:18px;color:#bbb;line-height:1.55;font-size:14px}
   .btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
   .btns .btn{flex:1;min-width:140px}
 
@@ -166,29 +208,88 @@
 
 <!-- Ajustes -->
 <div class="overlay" id="settings">
-  <div class="wrap">
-    <div class="head"><h2>Texto e ajustes</h2><button class="btn ghost" id="closeSettings">Pronto</button></div>
-    <textarea id="script" placeholder="Cole ou escreva seu roteiro aqui…"></textarea>
-
-    <div class="row"><label for="speed">Velocidade</label><input type="range" id="speed" min="0.5" max="15" step="0.5"><output id="speedOut"></output></div>
-    <div class="row"><label for="fsize">Tamanho da letra</label><input type="range" id="fsize" min="16" max="72" step="1"><output id="fsizeOut"></output></div>
-    <div class="row"><label for="bgop">Fundo do texto</label><input type="range" id="bgop" min="0" max="0.9" step="0.05"><output id="bgopOut"></output></div>
-    <div class="row"><label for="center">Centralizar texto</label><input type="checkbox" class="switch" id="center"></div>
-    <div class="row"><label for="mirrorText">Espelhar texto (p/ vidro de teleprompter)</label><input type="checkbox" class="switch" id="mirrorText"></div>
-    <div class="row"><label for="autoScroll">Rolar sozinho ao começar a gravar</label><input type="checkbox" class="switch" id="autoScroll"></div>
-    <div class="row"><label for="restartOnRec">Voltar ao início ao gravar</label><input type="checkbox" class="switch" id="restartOnRec"></div>
-    <div class="row"><label for="cd">Contagem regressiva</label>
-      <select id="cd"><option value="0">Sem</option><option value="3">3 s</option><option value="5">5 s</option></select></div>
-    <div class="row"><label for="quality">Qualidade</label>
-      <select id="quality"><option value="720">720p</option><option value="1080">1080p</option><option value="2160">4K (se suportar)</option></select></div>
-
-    <div class="btns">
-      <button class="btn ghost" id="fsBtn">Tela cheia</button>
-      <button class="btn ghost" id="resetBox">Reposicionar caixa do texto</button>
+  <div class="top">
+    <div class="line"><h2>Ajustes</h2><button class="done" id="closeSettings">Pronto</button></div>
+    <div class="tabs"><button data-tab="pScript" class="on">Roteiro</button><button data-tab="pOpts">Leitura e gravação</button></div>
+  </div>
+  <div class="body">
+    <!-- Roteiro -->
+    <div class="pane on" id="pScript">
+      <textarea id="script" placeholder="Cole ou escreva seu roteiro aqui…"></textarea>
+      <div class="scriptbar">
+        <span class="info" id="scriptInfo"></span>
+        <button class="chip" id="pasteBtn">Colar</button>
+        <button class="chip" id="clearBtn">Limpar</button>
+      </div>
     </div>
-    <p class="note">Dicas: toque no texto para pausar/continuar; arraste o texto para cima/baixo para ajustar onde está.
-      Use <b>✥</b> para mover a caixa e <b>⤢</b> para mudar o tamanho. A posição é salva separadamente para o celular em pé e deitado.
-      Escolha a orientação antes de começar a gravar.</p>
+
+    <!-- Opções -->
+    <div class="pane" id="pOpts">
+      <div class="group-t">Prévia</div>
+      <div class="preview" id="preview"><div id="previewText"></div></div>
+
+      <div class="group-t">Leitura</div>
+      <div class="group">
+        <div class="item">
+          <div class="lbl"><span>Velocidade</span><span class="val" id="speedOut"></span></div>
+          <div class="slide">
+            <button class="step" id="spdMinus">−</button>
+            <input type="range" id="speed" min="0.5" max="15" step="0.5">
+            <button class="step" id="spdPlus">+</button>
+          </div>
+        </div>
+        <div class="item">
+          <div class="lbl"><span>Tamanho da letra</span><span class="val" id="fsizeOut"></span></div>
+          <div class="slide"><span class="ic">A</span><input type="range" id="fsize" min="16" max="72" step="1"><span class="ic big">A</span></div>
+        </div>
+        <div class="item">
+          <div class="lbl"><span>Fundo atrás do texto</span><span class="val" id="bgopOut"></span></div>
+          <div class="slide"><span class="ic">○</span><input type="range" id="bgop" min="0" max="0.9" step="0.05"><span class="ic">●</span></div>
+        </div>
+        <div class="item">
+          <div class="lbl"><span>Alinhamento</span></div>
+          <div class="seg" data-key="center"><button data-v="0">Esquerda</button><button data-v="1">Centro</button></div>
+        </div>
+        <div class="item">
+          <label class="lbl"><span>Espelhar texto<small>Só para vidro de teleprompter</small></span><input type="checkbox" class="switch" id="mirrorText"></label>
+        </div>
+      </div>
+
+      <div class="group-t">Gravação</div>
+      <div class="group">
+        <div class="item">
+          <div class="lbl"><span>Contagem antes de gravar</span></div>
+          <div class="seg" data-key="cd"><button data-v="0">Sem</button><button data-v="3">3 s</button><button data-v="5">5 s</button><button data-v="10">10 s</button></div>
+        </div>
+        <div class="item">
+          <div class="lbl"><span>Qualidade do vídeo</span></div>
+          <div class="seg" data-key="quality"><button data-v="720">720p</button><button data-v="1080">1080p</button><button data-v="2160">4K</button></div>
+        </div>
+        <div class="item">
+          <label class="lbl"><span>Rolar texto ao gravar<small>Começa a rolar junto com a gravação</small></span><input type="checkbox" class="switch" id="autoScroll"></label>
+        </div>
+        <div class="item">
+          <label class="lbl"><span>Sempre começar do início<small>Volta o texto para o topo a cada gravação</small></span><input type="checkbox" class="switch" id="restartOnRec"></label>
+        </div>
+      </div>
+
+      <div class="group-t">Tela</div>
+      <div class="group">
+        <button class="item link" id="fsBtn">Tela cheia</button>
+        <button class="item link" id="resetBox">Reposicionar caixa de texto</button>
+      </div>
+
+      <details class="help">
+        <summary>Como usar</summary>
+        <ul>
+          <li>Toque no texto para pausar ou continuar.</li>
+          <li>Arraste o texto para cima ou para baixo para voltar ou avançar.</li>
+          <li>Use ✥ para mover a caixa e ⤢ para mudar o tamanho. A posição fica salva para o celular em pé e deitado.</li>
+          <li>Os botões − e + na caixa mudam a velocidade até durante a gravação.</li>
+          <li>Escolha em pé ou deitado antes de apertar o botão vermelho.</li>
+        </ul>
+      </details>
+    </div>
   </div>
 </div>
 
@@ -550,29 +651,75 @@
   };
 
   // ---------- Ajustes ----------
-  const ranges = {speed:v=>v+'x', fsize:v=>v+'px', bgop:v=>Math.round(v*100)+'%'};
+  const ranges = {speed:v=>v.toString().replace('.',',')+'x', fsize:v=>v+' px', bgop:v=>Math.round(v*100)+'%'};
+  const SEG = {center:v=>v==='1', cd:v=>+v, quality:v=>+v};
+  const segVal = k => k==='center' ? (S.center?'1':'0') : String(S[k]);
+  function fmtDur(sec){ sec = Math.round(sec); return sec < 60 ? sec+' s' : Math.floor(sec/60)+' min '+String(sec%60).padStart(2,'0')+' s'; }
+  function updateInfo(){
+    const words = (S.text.trim().match(/\S+/g) || []).length;
+    const pps = S.speed * S.fsize * 0.33;
+    $('scriptInfo').textContent = words ? `${words} palavras · ≈ ${fmtDur(maxOffset()/pps)} de leitura` : 'Nenhum texto ainda';
+  }
+  function updatePreview(){
+    const pv = $('previewText');
+    pv.textContent = S.text.trim() || 'Seu texto aparece assim na tela.';
+    pv.style.fontSize = S.fsize + 'px';
+    pv.style.textAlign = S.center ? 'center' : 'left';
+    pv.style.transform = S.mirrorText ? 'scaleX(-1)' : '';
+    $('preview').style.setProperty('--bg', S.bgop);
+  }
   function syncSettingsUI(){
-    $('script').value = S.text;
+    if (document.activeElement !== $('script')) $('script').value = S.text;
     for (const k in ranges){ $(k).value = S[k]; $(k+'Out').textContent = ranges[k](S[k]); }
-    ['center','mirrorText','autoScroll','restartOnRec'].forEach(k => $(k).checked = S[k]);
-    $('cd').value = S.cd; $('quality').value = S.quality;
+    ['mirrorText','autoScroll','restartOnRec'].forEach(k => $(k).checked = S[k]);
+    document.querySelectorAll('.seg').forEach(seg => {
+      const v = segVal(seg.dataset.key);
+      seg.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+    });
+    updatePreview(); updateInfo();
   }
+  function changed(){ renderText(); spdLabel(); syncSettingsUI(); }
   for (const k in ranges){
-    $(k).addEventListener('input', e => { S[k] = +e.target.value; $(k+'Out').textContent = ranges[k](S[k]); save(k); renderText(); spdLabel(); });
+    $(k).addEventListener('input', e => { S[k] = +e.target.value; save(k); changed(); });
   }
-  ['center','mirrorText','autoScroll','restartOnRec'].forEach(k => $(k).addEventListener('change', e => { S[k] = e.target.checked; save(k); renderText(); }));
-  $('cd').onchange = e => { S.cd = +e.target.value; save('cd'); };
-  $('quality').onchange = async e => {
-    S.quality = +e.target.value; save('quality');
-    if (stream && !(recorder && recorder.state === 'recording')){ try{ await startCamera(); toast('Qualidade alterada'); }catch(e){ toast('Câmera não suporta essa qualidade'); } }
+  $('spdMinus').onclick = () => changeSpeed(-0.5);
+  $('spdPlus').onclick  = () => changeSpeed(+0.5);
+  ['mirrorText','autoScroll','restartOnRec'].forEach(k => $(k).addEventListener('change', e => { S[k] = e.target.checked; save(k); changed(); }));
+  document.querySelectorAll('.seg').forEach(seg => seg.addEventListener('click', async e => {
+    const b = e.target.closest('button'); if (!b) return;
+    const k = seg.dataset.key; const old = S[k];
+    S[k] = SEG[k](b.dataset.v); save(k); changed();
+    if (k === 'quality' && S[k] !== old && stream && !(recorder && recorder.state === 'recording')){
+      try { await startCamera(); toast('Qualidade: ' + b.textContent); } catch(err){ toast('A câmera não suporta essa qualidade'); }
+    }
+  }));
+  document.querySelectorAll('.tabs button').forEach(t => t.onclick = () => {
+    document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === t));
+    document.querySelectorAll('.pane').forEach(p => p.classList.toggle('on', p.id === t.dataset.tab));
+    $('script').blur(); syncSettingsUI();
+  });
+  $('script').addEventListener('input', e => { S.text = e.target.value; save('text'); renderText(); updateInfo(); });
+  $('pasteBtn').onclick = async () => {
+    try {
+      const t = await navigator.clipboard.readText();
+      if (!t) return toast('Nada para colar');
+      S.text = t; save('text'); $('script').value = t; renderText(); updateInfo(); offset = 0; applyOffset();
+      toast('Texto colado');
+    } catch(e){ toast('Toque e segure no campo de texto e escolha “Colar”'); }
   };
-  $('script').addEventListener('input', e => { S.text = e.target.value; save('text'); renderText(); });
+  let clearArm = null;
+  $('clearBtn').onclick = () => {
+    const b = $('clearBtn');
+    if (!clearArm){ b.textContent = 'Apagar tudo?'; b.classList.add('warn'); clearArm = setTimeout(() => { clearArm = null; b.textContent = 'Limpar'; b.classList.remove('warn'); }, 2500); return; }
+    clearTimeout(clearArm); clearArm = null; b.textContent = 'Limpar'; b.classList.remove('warn');
+    S.text = ''; save('text'); $('script').value = ''; renderText(); updateInfo(); $('script').focus();
+  };
   $('openSettings').onclick = () => {
     if (recorder && recorder.state === 'recording') return toast('Pare a gravação para abrir os ajustes');
     setPlaying(false); syncSettingsUI(); $('settings').classList.add('show');
   };
-  $('closeSettings').onclick = () => { $('settings').classList.remove('show'); renderText(); };
-  $('resetBox').onclick = () => { geo[orient()] = {...DEFAULT_GEO[orient()]}; store.set('geo', geo); applyGeo(); toast('Caixa reposicionada'); };
+  $('closeSettings').onclick = () => { $('script').blur(); $('settings').classList.remove('show'); renderText(); };
+  $('resetBox').onclick = () => { geo[orient()] = {...DEFAULT_GEO[orient()]}; store.set('geo', geo); applyGeo(); $('settings').classList.remove('show'); toast('Caixa reposicionada'); };
 
   // ---------- Tela cheia ----------
   const isIOS = /iP(hone|od|ad)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
