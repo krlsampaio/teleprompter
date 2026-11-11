@@ -56,7 +56,7 @@
   svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 
   /* ---------- Controles ---------- */
-  #controls{position:fixed;z-index:6;display:flex;align-items:center;justify-content:space-around;
+  #controls{position:fixed;z-index:6;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;justify-items:center;
     left:0;right:0;bottom:0;padding:14px calc(24px + var(--sar)) calc(18px + var(--sab)) calc(24px + var(--sal))}
   .round{width:52px;height:52px;border-radius:50%;background:rgba(0,0,0,.45);display:grid;place-items:center;
     backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
@@ -65,7 +65,7 @@
   #rec i{display:block;width:58px;height:58px;border-radius:50%;background:var(--red);transition:.2s}
   #rec.on i{width:30px;height:30px;border-radius:7px}
   @media (orientation:landscape){
-    #controls{left:auto;top:0;bottom:0;right:0;flex-direction:column;
+    #controls{left:auto;top:0;bottom:0;right:0;grid-template-columns:auto;grid-template-rows:1fr auto 1fr;
       padding:calc(16px + var(--sat)) calc(16px + var(--sar)) calc(16px + var(--sab)) 14px}
   }
   #camopts{position:fixed;z-index:6;left:0;right:0;bottom:calc(118px + var(--sab));display:flex;justify-content:center;align-items:center;gap:10px;pointer-events:none}
@@ -169,6 +169,39 @@
   #toast{position:fixed;left:50%;bottom:calc(110px + var(--sab));transform:translateX(-50%);z-index:40;
     background:rgba(30,30,30,.95);padding:10px 16px;border-radius:12px;font-size:14px;display:none;max-width:90vw;text-align:center}
   #toast.show{display:block}
+  .side{display:flex;gap:14px;align-items:center}
+  @media (orientation:landscape){ .side{flex-direction:column} }
+  #histBtn{width:52px;height:52px;border-radius:12px;overflow:hidden;background:rgba(0,0,0,.45) center/cover no-repeat;
+    border:2px solid rgba(255,255,255,.85);display:grid;place-items:center;position:relative}
+  #histBtn.has svg{display:none}
+  #histBtn .count{position:absolute;right:-2px;top:-2px;background:var(--red);font-size:11px;font-weight:700;min-width:18px;height:18px;border-radius:9px;padding:0 4px;display:none;place-items:center}
+
+  /* ---------- Histórico ---------- */
+  #history{padding:0;background:#0c0c0d}
+  #history .top{position:sticky;top:0;z-index:2;background:rgba(12,12,13,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+    padding:calc(12px + var(--sat)) calc(16px + var(--sar)) 12px calc(16px + var(--sal))}
+  #history .top .line{display:flex;align-items:center;justify-content:space-between;max-width:640px;margin:0 auto}
+  #history .top h2{margin:0;font-size:20px}
+  #history .top small{display:block;color:#8e8e93;font-size:13px;margin-top:2px;font-weight:400}
+  #history .body{max-width:640px;margin:0 auto;padding:8px calc(16px + var(--sar)) calc(30px + var(--sab)) calc(16px + var(--sal))}
+  .vid{display:flex;gap:12px;align-items:center;background:#1c1c1e;border-radius:14px;padding:10px;margin-bottom:10px;width:100%;text-align:left}
+  .vid .th{width:64px;height:64px;border-radius:10px;background:#2c2c2e center/cover no-repeat;flex:none;position:relative}
+  .vid .th span{position:absolute;right:4px;bottom:4px;font-size:11px;font-weight:600;background:rgba(0,0,0,.6);padding:1px 5px;border-radius:5px}
+  .vid .info{flex:1;min-width:0}
+  .vid .info b{display:block;font-size:16px;font-weight:600}
+  .vid .info small{display:block;color:#8e8e93;font-size:13px;margin-top:3px}
+  .vid .del{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:#ff453a;flex:none}
+  .vid .del.warn{background:var(--red);color:#fff;width:auto;padding:0 12px;border-radius:99px;font-size:13px;font-weight:600}
+  .empty{text-align:center;color:#8e8e93;padding:60px 20px;line-height:1.5}
+
+  /* ---------- Pré-carregamento ---------- */
+  .loadbox{margin-top:12px;background:#1c1c1e;border-radius:12px;padding:14px 16px}
+  .loadbox .row1{display:flex;justify-content:space-between;font-size:14px;color:#ccc;margin-bottom:10px}
+  .loadbox .row1 b{color:#fff;font-variant-numeric:tabular-nums}
+  .bar2{height:8px;border-radius:99px;background:#3a3a3c;overflow:hidden}
+  .bar2 i{display:block;height:100%;width:0;background:#34c759;border-radius:99px;transition:width .2s}
+  #reviewActions{display:none}
+  #reviewActions.show{display:block}
   #saving{position:fixed;inset:0;z-index:35;display:none;place-items:center;background:rgba(0,0,0,.75);text-align:center;font-size:16px}
   #saving.show{display:grid}
   .spin{width:42px;height:42px;margin:0 auto 14px;border-radius:50%;border:4px solid rgba(255,255,255,.25);border-top-color:#fff;animation:sp 1s linear infinite}
@@ -207,13 +240,21 @@
   <div id="lenses" class="pill" style="display:none"></div>
 </div>
 <div id="controls">
-  <button class="round" id="openSettings" title="Ajustes">
-    <svg viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>
-  </button>
+  <div class="side">
+    <button id="histBtn" title="Vídeos gravados">
+      <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9l5 3-5 3z"/></svg>
+      <span class="count" id="histCount"></span>
+    </button>
+    <button class="round" id="openSettings" title="Ajustes">
+      <svg viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>
+    </button>
+  </div>
   <button id="rec" title="Gravar"><i></i></button>
-  <button class="round" id="flip" title="Trocar câmera">
-    <svg viewBox="0 0 24 24"><path d="M20 7h-3l-2-3H9L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M9 13a3 3 0 0 1 5-2.2M15 13a3 3 0 0 1-5 2.2M14 9v2h-2M10 17v-2h2"/></svg>
-  </button>
+  <div class="side">
+    <button class="round" id="flip" title="Trocar câmera">
+      <svg viewBox="0 0 24 24"><path d="M20 7h-3l-2-3H9L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M9 13a3 3 0 0 1 5-2.2M15 13a3 3 0 0 1-5 2.2M14 9v2h-2M10 17v-2h2"/></svg>
+    </button>
+  </div>
 </div>
 
 <!-- Tela inicial -->
@@ -221,7 +262,7 @@
   <h1>Teleprompter</h1>
   <p>Grave vídeos lendo seu texto na tela. O texto <b>não aparece</b> no vídeo gravado.</p>
   <button class="btn" id="startBtn">Ativar câmera e microfone</button>
-  <button class="btn ghost" id="recoverBtn" style="display:none">Recuperar última gravação</button>
+  <button class="btn ghost" id="startHist" style="display:none">Ver vídeos gravados</button>
   <div class="err" id="startErr"></div>
   <div class="tip" id="iosTip">
     <b>Para usar em tela cheia no iPhone:</b><br>
@@ -317,22 +358,38 @@
   </div>
 </div>
 
+<!-- Histórico -->
+<div class="overlay" id="history">
+  <div class="top">
+    <div class="line"><h2>Vídeos gravados<small id="histInfo"></small></h2><button class="done" id="closeHist">Fechar</button></div>
+  </div>
+  <div class="body" id="histList"></div>
+</div>
+
 <!-- Revisão -->
 <div class="overlay" id="review">
   <div class="wrap">
-    <div class="head"><h2>Vídeo gravado</h2></div>
+    <div class="head"><h2 id="reviewTitle">Vídeo gravado</h2><button class="done" id="closeReview">Fechar</button></div>
     <video id="playback" playsinline controls></video>
     <div class="meta" id="meta"></div>
-    <div class="btns">
-      <button class="btn" id="shareBtn">Salvar na galeria / Compartilhar</button>
-      <button class="btn ghost" id="dlBtn">Baixar arquivo</button>
+
+    <div class="loadbox" id="loadBox">
+      <div class="row1"><span id="loadTxt">Carregando vídeo…</span><b id="loadPct">0%</b></div>
+      <div class="bar2"><i id="loadBar"></i></div>
     </div>
-    <div class="btns">
-      <button class="btn ghost" id="againBtn">Gravar de novo</button>
-      <button class="btn red" id="discardBtn">Descartar</button>
+
+    <div id="reviewActions">
+      <div class="btns">
+        <button class="btn" id="shareBtn">Salvar na galeria / Compartilhar</button>
+        <button class="btn ghost" id="dlBtn">Baixar arquivo</button>
+      </div>
+      <div class="btns">
+        <button class="btn ghost" id="againBtn">Gravar outro</button>
+        <button class="btn red" id="discardBtn">Excluir vídeo</button>
+      </div>
+      <p class="note">No iPhone: “Salvar na galeria” abre o menu de compartilhar — toque em <b>Salvar Vídeo</b> para ir para o app Fotos.
+        “Baixar arquivo” salva no app Arquivos (pasta Downloads). Os vídeos ficam guardados no histórico até você excluir.</p>
     </div>
-    <p class="note">No iPhone: “Salvar na galeria” abre o menu de compartilhar — toque em <b>Salvar Vídeo</b> para ir para o app Fotos.
-      “Baixar arquivo” salva no app Arquivos (pasta Downloads).</p>
   </div>
 </div>
 
@@ -699,18 +756,22 @@
       if (dbp) return dbp;
       dbp = new Promise((res, rej) => {
         if (!window.indexedDB) return rej(new Error('sem IndexedDB'));
-        const q = indexedDB.open('teleprompter-rec', 1);
-        q.onupgradeneeded = () => q.result.createObjectStore('chunks');
+        const q = indexedDB.open('teleprompter-rec', 2);
+        q.onupgradeneeded = () => {
+          const db = q.result;
+          if (!db.objectStoreNames.contains('chunks')) db.createObjectStore('chunks');
+          if (!db.objectStoreNames.contains('videos')) db.createObjectStore('videos', {keyPath:'sid'});
+        };
         q.onsuccess = () => res(q.result);
         q.onerror = () => rej(q.error);
       }).catch(e => { dbp = null; throw e; });
       return dbp;
     }
-    const tx = async (mode, fn) => {
+    const tx = async (stores, mode, fn) => {
       const db = await open();
       return new Promise((res, rej) => {
-        const t = db.transaction('chunks', mode); const st = t.objectStore('chunks');
-        let out; const r = fn(st); if (r) r.onsuccess = () => { out = r.result; };
+        const t = db.transaction(stores, mode);
+        let out; const r = fn(t); if (r && 'onsuccess' in r) r.onsuccess = () => { out = r.result; };
         t.oncomplete = () => res(out); t.onerror = () => rej(t.error); t.onabort = () => rej(t.error || new Error('abort'));
       });
     };
@@ -718,9 +779,21 @@
     const range = sid => IDBKeyRange.bound(sid + '-', sid + '-￿');
     return {
       open,
-      put: (sid, n, blob) => tx('readwrite', st => st.put(blob, key(sid, n))),
-      getAll: sid => tx('readonly', st => st.getAll(range(sid))),
-      clear: () => tx('readwrite', st => st.clear()),
+      put: (sid, n, blob) => tx('chunks', 'readwrite', t => t.objectStore('chunks').put(blob, key(sid, n))),
+      count: sid => tx('chunks', 'readonly', t => t.objectStore('chunks').count(range(sid))),
+      // lê os pedaços um a um, avisando o progresso
+      read: async (sid, onProg) => {
+        const total = await RecDB.count(sid) || 1;
+        const parts = [];
+        await tx('chunks', 'readonly', t => {
+          const c = t.objectStore('chunks').openCursor(range(sid));
+          c.onsuccess = () => { const cur = c.result; if (cur){ parts.push(cur.value); onProg && onProg(parts.length / total); cur.continue(); } };
+        });
+        return parts;
+      },
+      saveMeta: m => tx('videos', 'readwrite', t => t.objectStore('videos').put(m)),
+      list: () => tx('videos', 'readonly', t => t.objectStore('videos').getAll()),
+      remove: sid => tx(['chunks','videos'], 'readwrite', t => { t.objectStore('chunks').delete(range(sid)); t.objectStore('videos').delete(sid); }),
     };
   })();
   async function hasRoom(){
@@ -733,7 +806,7 @@
 
   // ---------- Gravação ----------
   let recorder = null, chunks = [], recStart = 0, recEnd = 0, timerI = null, lastBlob = null, lastUrl = null, lastName = '';
-  let recSid = null, recSeq = 0, useDisk = false, writeQ = Promise.resolve(), diskFail = false;
+  let recSid = null, recSeq = 0, useDisk = false, writeQ = Promise.resolve(), diskFail = false, recBytes = 0, recMeta = null;
   function pickMime(){
     const list = ['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4;codecs=avc1,mp4a','video/mp4',
                   'video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];
@@ -761,9 +834,9 @@
     busy = true;
     if (S.restartOnRec){ offset = 0; applyOffset(); }
     setPlaying(false);
-    // prepara o armazenamento em disco (apaga a gravação anterior)
-    useDisk = false; diskFail = false; writeQ = Promise.resolve();
-    try { await RecDB.clear(); useDisk = true; } catch(e){ useDisk = false; }
+    // prepara o armazenamento em disco (os vídeos anteriores ficam no histórico)
+    useDisk = false; diskFail = false; writeQ = Promise.resolve(); recBytes = 0;
+    try { await RecDB.open(); useDisk = true; } catch(e){ useDisk = false; }
     const free = await hasRoom();
     if (free !== null && free < 300) toast('Pouco espaço livre para o site: vídeos longos podem não caber', 4000);
     await countdown(+S.cd);
@@ -778,11 +851,13 @@
       recorder = new MediaRecorder(recStream);
     }
     const recMime = recorder.mimeType || mime || 'video/mp4';
-    if (useDisk) store.set('pending', {sid: recSid, type: recMime, start: Date.now()});
+    recMeta = {sid: recSid, type: recMime.split(';')[0], date: Date.now(), duration: 0, size: 0, status: 'recording',
+               orient: orient(), facing: S.facing, thumb: makeThumb()};
+    if (useDisk) RecDB.saveMeta(recMeta).catch(() => {});
     recorder.ondataavailable = e => {
       if (!e.data || !e.data.size) return;
       if (useDisk && !diskFail){
-        const n = recSeq++, blob = e.data;
+        const n = recSeq++, blob = e.data; recBytes += blob.size;
         writeQ = writeQ.then(() => RecDB.put(recSid, n, blob)).catch(err => {
           // se o disco falhar no meio, guarda o resto na memória (os pedaços já salvos continuam valendo)
           diskFail = true; chunks.push(blob);
@@ -799,50 +874,195 @@
     busy = false;
   };
 
+  // miniatura do vídeo (tirada da câmera no começo da gravação)
+  function makeThumb(){
+    try {
+      const vw = cam.videoWidth, vh = cam.videoHeight; if (!vw) return '';
+      const sz = 160, c = document.createElement('canvas'); c.width = c.height = sz;
+      const m = Math.min(vw, vh), ctx = c.getContext('2d');
+      if (S.facing === 'user'){ ctx.translate(sz, 0); ctx.scale(-1, 1); }
+      ctx.drawImage(cam, (vw-m)/2, (vh-m)/2, m, m, 0, 0, sz, sz);
+      return c.toDataURL('image/jpeg', 0.7);
+    } catch(e){ return ''; }
+  }
+
   async function finishRecording(){
     recEnd = Date.now();
     clearInterval(timerI);
     if (cropRAF){ cancelAnimationFrame(cropRAF); cropRAF = null; }
     $('rec').classList.remove('on'); $('timer').classList.remove('show');
     setPlaying(false);
-    const type = (recorder.mimeType || chunks[0]?.type || 'video/mp4').split(';')[0];
-    $('saving').classList.add('show'); $('savingTxt').textContent = 'Salvando vídeo…';
-    let parts = [];
-    try {
-      if (useDisk){
-        await writeQ;
-        parts = await RecDB.getAll(recSid);
-      }
-    } catch(e){ parts = []; }
-    parts = parts.concat(chunks); chunks = [];
-    $('saving').classList.remove('show');
-    if (!parts.length){ toast('Não consegui salvar o vídeo. Tente gravar de novo.', 4000); return; }
-    showReview(parts, type, (recEnd - recStart) / 1000);
+    const secs = (recEnd - recStart) / 1000;
+    if (useDisk){
+      $('saving').classList.add('show'); $('savingTxt').textContent = 'Salvando vídeo…';
+      try { await writeQ; } catch(e){}
+      // pedaços que ficaram na memória (se o disco falhou no meio) também vão para o disco
+      for (const b of chunks){ try { await RecDB.put(recSid, recSeq++, b); } catch(e){ break; } }
+      chunks = [];
+      recMeta.duration = secs; recMeta.size = recBytes; recMeta.status = 'done';
+      try { await RecDB.saveMeta(recMeta); } catch(e){}
+      $('saving').classList.remove('show');
+      refreshHistBtn();
+      openVideo(recMeta, true);
+    } else {
+      // sem armazenamento: só dá para revisar agora (não entra no histórico)
+      const parts = chunks; chunks = [];
+      if (!parts.length){ toast('Não consegui salvar o vídeo. Tente gravar de novo.', 4000); return; }
+      openVideo({sid:null, type:(recorder.mimeType||'video/mp4').split(';')[0], date:Date.now(), duration:secs, parts}, true);
+    }
   }
 
-  function showReview(parts, type, secs){
-    const ext = type.includes('mp4') ? 'mp4' : type.includes('webm') ? 'webm' : (type.includes('quicktime') ? 'mov' : 'mp4');
-    lastBlob = new Blob(parts, {type});
-    if (lastUrl) URL.revokeObjectURL(lastUrl);
-    lastUrl = URL.createObjectURL(lastBlob);
-    const d = new Date(), p = n => String(n).padStart(2,'0');
-    lastName = `teleprompter-${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}.${ext}`;
-    const pb = $('playback'); pb.preload = 'metadata'; pb.src = lastUrl;
-    $('meta').textContent = `${secs ? fmt(secs) + ' · ' : ''}${(lastBlob.size/1048576).toFixed(1)} MB · ${ext.toUpperCase()}`;
+  // ---------- Abrir vídeo (com pré-carregamento) ----------
+  let current = null, loadToken = 0;
+  function setLoad(p, txt){
+    p = Math.max(0, Math.min(1, p));
+    $('loadBar').style.width = (p*100).toFixed(0) + '%';
+    $('loadPct').textContent = Math.floor(p*100) + '%';
+    if (txt) $('loadTxt').textContent = txt;
+  }
+  function extOf(type){ return type.includes('webm') ? 'webm' : type.includes('quicktime') ? 'mov' : 'mp4'; }
+  function fileName(m){
+    const d = new Date(m.date), p = n => String(n).padStart(2,'0');
+    return `teleprompter-${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}.${extOf(m.type)}`;
+  }
+  const mb = b => b >= 1073741824 ? (b/1073741824).toFixed(2).replace('.',',') + ' GB' : (b/1048576).toFixed(1).replace('.',',') + ' MB';
+  function whenTxt(t){
+    const d = new Date(t), now = new Date(), p = n => String(n).padStart(2,'0');
+    const hm = `${p(d.getHours())}:${p(d.getMinutes())}`;
+    if (d.toDateString() === now.toDateString()) return 'Hoje, ' + hm;
+    const y = new Date(now); y.setDate(now.getDate()-1);
+    if (d.toDateString() === y.toDateString()) return 'Ontem, ' + hm;
+    return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()}, ${hm}`;
+  }
+
+  async function openVideo(m, fresh){
+    const token = ++loadToken;
+    current = m;
+    const pb = $('playback');
+    pb.pause(); pb.removeAttribute('src'); pb.load();
+    if (lastUrl){ URL.revokeObjectURL(lastUrl); lastUrl = null; }
+    lastBlob = null;
+    $('reviewTitle').textContent = fresh ? 'Vídeo gravado' : whenTxt(m.date);
+    $('meta').textContent = [m.duration ? fmt(m.duration) : '', m.size ? mb(m.size) : '', extOf(m.type).toUpperCase()].filter(Boolean).join(' · ');
+    $('reviewActions').classList.remove('show');
+    $('loadBox').style.display = '';
+    setLoad(0, 'Lendo o vídeo do armazenamento…');
+    $('history').classList.remove('show');
     $('review').classList.add('show');
+
+    // 1) junta os pedaços (0% → 70%)
+    let parts = m.parts;
+    if (!parts){
+      try { parts = await RecDB.read(m.sid, f => { if (token === loadToken) setLoad(f * 0.7); }); }
+      catch(e){ parts = []; }
+    }
+    if (token !== loadToken) return;
+    if (!parts.length){ setLoad(0, 'Não encontrei esse vídeo.'); return; }
+    lastBlob = new Blob(parts, {type: m.type || 'video/mp4'});
+    lastName = fileName(m);
+    if (!m.size){ m.size = lastBlob.size; $('meta').textContent = [m.duration ? fmt(m.duration) : '', mb(m.size), extOf(m.type).toUpperCase()].filter(Boolean).join(' · '); }
+    lastUrl = URL.createObjectURL(lastBlob);
+    setLoad(0.7, 'Preparando o vídeo…');
+
+    // 2) o player carrega o vídeo (70% → 100%)
+    let done = false;
+    const ready = () => {
+      if (done || token !== loadToken) return; done = true;
+      cleanup(); setLoad(1, 'Pronto!');
+      setTimeout(() => { if (token !== loadToken) return; $('loadBox').style.display = 'none'; $('reviewActions').classList.add('show'); }, 350);
+    };
+    const onProgress = () => {
+      try {
+        if (pb.duration && isFinite(pb.duration) && pb.buffered.length)
+          setLoad(0.7 + 0.3 * (pb.buffered.end(pb.buffered.length-1) / pb.duration) * 0.95);
+      } catch(e){}
+    };
+    const onMeta = () => {
+      setLoad(Math.max(0.85, parseFloat($('loadPct').textContent)/100));
+      // no iPhone o vídeo só termina de carregar quando toca: toca sem som e pausa
+      pb.muted = true;
+      const pr = pb.play();
+      if (pr && pr.then) pr.then(() => { pb.pause(); pb.currentTime = 0; pb.muted = false; }).catch(() => { pb.muted = false; });
+      setTimeout(ready, 2500);   // garantia
+    };
+    const cleanup = () => { ['progress','loadedmetadata','canplaythrough','loadeddata','error'].forEach(ev => pb.removeEventListener(ev, h[ev])); };
+    const h = {progress: onProgress, loadedmetadata: onMeta, canplaythrough: ready, loadeddata: () => setTimeout(ready, 300),
+               error: () => { cleanup(); setLoad(0, 'Não deu para abrir esse vídeo.'); }};
+    for (const ev in h) pb.addEventListener(ev, h[ev]);
+    pb.preload = 'auto';
+    pb.src = lastUrl;
+    pb.load();
+    setTimeout(() => { if (!done && token === loadToken && lastBlob) ready(); }, 10000);   // nunca fica preso
   }
 
-  // Recupera uma gravação que ficou salva no disco (ex.: o Safari fechou ou recarregou)
+  // ---------- Histórico ----------
+  async function refreshHistBtn(){
+    let list = [];
+    try { list = (await RecDB.list()).sort((a,b) => b.date - a.date); } catch(e){}
+    const b = $('histBtn'), c = $('histCount');
+    if (list.length && list[0].thumb){ b.style.backgroundImage = `url(${list[0].thumb})`; b.classList.add('has'); }
+    else { b.style.backgroundImage = ''; b.classList.remove('has'); }
+    c.textContent = list.length; c.style.display = list.length ? 'grid' : 'none';
+    $('startHist').style.display = list.length ? '' : 'none';
+    return list;
+  }
+  async function openHistory(){
+    if (recorder && recorder.state === 'recording') return toast('Pare a gravação para ver os vídeos');
+    setPlaying(false);
+    const list = await refreshHistBtn();
+    const box = $('histList'); box.innerHTML = '';
+    const total = list.reduce((a, m) => a + (m.size || 0), 0);
+    $('histInfo').textContent = list.length ? `${list.length} vídeo${list.length>1?'s':''} · ${mb(total)}` : '';
+    if (!list.length) box.innerHTML = '<div class="empty">Nenhum vídeo ainda.<br>Os vídeos que você gravar aparecem aqui.</div>';
+    for (const m of list){
+      const row = document.createElement('div'); row.className = 'vid'; row.setAttribute('role','button');
+      const th = document.createElement('div'); th.className = 'th';
+      if (m.thumb) th.style.backgroundImage = `url(${m.thumb})`;
+      const tag = document.createElement('span'); tag.textContent = m.duration ? fmt(m.duration) : '—'; th.appendChild(tag);
+      const info = document.createElement('div'); info.className = 'info';
+      const t = document.createElement('b'); t.textContent = whenTxt(m.date);
+      const sm = document.createElement('small');
+      sm.textContent = [m.orient === 'landscape' ? 'Deitado' : 'Em pé', m.facing === 'user' ? 'frontal' : 'traseira', m.size ? mb(m.size) : '', m.status === 'recording' ? 'interrompido' : ''].filter(Boolean).join(' · ');
+      info.append(t, sm);
+      const del = document.createElement('button'); del.className = 'del'; del.title = 'Excluir';
+      del.innerHTML = '<svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>';
+      let arm = null;
+      del.onclick = async e => {
+        e.stopPropagation();
+        if (!arm){ del.classList.add('warn'); del.textContent = 'Excluir?'; arm = setTimeout(() => { arm = null; del.classList.remove('warn'); del.innerHTML = '<svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>'; }, 2500); return; }
+        clearTimeout(arm);
+        try { await RecDB.remove(m.sid); } catch(err){}
+        openHistory();
+      };
+      row.append(th, info, del);
+      row.onclick = () => openVideo(m, false);
+      box.appendChild(row);
+    }
+    $('history').classList.add('show');
+  }
+  $('histBtn').onclick = openHistory;
+  $('startHist').onclick = openHistory;
+  $('closeHist').onclick = () => $('history').classList.remove('show');
+
+  // Gravações interrompidas (Safari fechou no meio) entram no histórico com o que foi salvo
   (async () => {
-    const pend = store.get('pending', null);
-    if (!pend) return;
     try {
-      const parts = await RecDB.getAll(pend.sid);
-      if (parts && parts.length){
-        const b = $('recoverBtn'); b.style.display = '';
-        b.onclick = () => { showReview(parts, (pend.type || 'video/mp4').split(';')[0], 0); };
-      } else store.set('pending', null);
+      const list = await RecDB.list();
+      for (const m of list){
+        if (m.status !== 'recording') continue;
+        const n = await RecDB.count(m.sid);
+        if (!n){ await RecDB.remove(m.sid); continue; }
+        m.status = 'interrupted'; await RecDB.saveMeta(m);
+      }
     } catch(e){}
+    // gravação salva pela versão anterior do site
+    try {
+      const pend = store.get('pending', null);
+      if (pend && pend.sid && await RecDB.count(pend.sid))
+        await RecDB.saveMeta({sid: pend.sid, type: (pend.type||'video/mp4').split(';')[0], date: pend.start || Date.now(), duration: 0, size: 0, status: 'interrupted', orient: 'portrait', facing: 'user', thumb: ''});
+    } catch(e){}
+    try { store.set('pending', null); } catch(e){}
+    refreshHistBtn();
   })();
 
   $('shareBtn').onclick = async () => {
@@ -864,14 +1084,25 @@
     toast('Download iniciado: ' + lastName);
   }
   $('dlBtn').onclick = download;
-  function closeReview(){ $('playback').pause(); $('review').classList.remove('show'); }
-  $('againBtn').onclick = () => { closeReview(); offset = 0; applyOffset(); };
-  $('discardBtn').onclick = () => {
-    closeReview(); $('playback').removeAttribute('src');
-    if (lastUrl) URL.revokeObjectURL(lastUrl); lastBlob = null; lastUrl = null;
-    store.set('pending', null); RecDB.clear().catch(()=>{});
-    $('recoverBtn').style.display = 'none';
-    toast('Vídeo descartado');
+  function closeReview(){
+    loadToken++;
+    const pb = $('playback'); pb.pause(); pb.removeAttribute('src'); pb.load();
+    if (lastUrl){ URL.revokeObjectURL(lastUrl); lastUrl = null; }
+    lastBlob = null;
+    $('review').classList.remove('show');
+  }
+  $('closeReview').onclick = closeReview;
+  $('againBtn').onclick = () => { closeReview(); $('history').classList.remove('show'); offset = 0; applyOffset(); };
+  let delArm = null;
+  $('discardBtn').onclick = async () => {
+    const b = $('discardBtn');
+    if (!delArm){ b.textContent = 'Toque de novo para excluir'; delArm = setTimeout(() => { delArm = null; b.textContent = 'Excluir vídeo'; }, 2500); return; }
+    clearTimeout(delArm); delArm = null; b.textContent = 'Excluir vídeo';
+    const sid = current && current.sid;
+    closeReview();
+    if (sid){ try { await RecDB.remove(sid); } catch(e){} }
+    refreshHistBtn();
+    toast('Vídeo excluído');
   };
 
   // ---------- Ajustes ----------
