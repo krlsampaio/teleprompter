@@ -6,6 +6,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Teleprompter">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>Teleprompter</title>
 <style>
   :root{
@@ -21,7 +25,7 @@
     -webkit-user-select:none;user-select:none;overscroll-behavior:none}
   button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 
-  #cam{position:fixed;inset:0;width:100%;height:100%;object-fit:contain;background:#000}
+  #cam{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;background:#000}
   #cam.mirror{transform:scaleX(-1)}
 
   /* ---------- Caixa do texto ---------- */
@@ -78,6 +82,10 @@
   .btn.ghost{background:rgba(255,255,255,.14);color:#fff}
   .btn.red{background:var(--red);color:#fff}
   .err{color:#ff8a80;max-width:440px;line-height:1.45}
+  .tip{max-width:420px;background:rgba(255,255,255,.1);border-radius:14px;padding:14px 16px;text-align:left;line-height:1.5;font-size:15px;display:none}
+  .tip.show{display:block}
+  .tip b{white-space:nowrap}
+  html,body{height:100%;min-height:-webkit-fill-available}
 
   #settings .wrap,#review .wrap{max-width:640px;margin:0 auto}
   .head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
@@ -148,6 +156,12 @@
   <p>Grave vídeos lendo seu texto na tela. O texto <b>não aparece</b> no vídeo gravado.</p>
   <button class="btn" id="startBtn">Ativar câmera e microfone</button>
   <div class="err" id="startErr"></div>
+  <div class="tip" id="iosTip">
+    <b>Para usar em tela cheia no iPhone:</b><br>
+    1. Toque em <b>Compartilhar</b> (quadrado com seta ↑) no Safari<br>
+    2. Toque em <b>Adicionar à Tela de Início</b><br>
+    3. Abra o <b>Teleprompter</b> pelo ícone que aparecer — ele abre sem as barras do Safari.
+  </div>
 </div>
 
 <!-- Ajustes -->
@@ -169,6 +183,7 @@
       <select id="quality"><option value="720">720p</option><option value="1080">1080p</option><option value="2160">4K (se suportar)</option></select></div>
 
     <div class="btns">
+      <button class="btn ghost" id="fsBtn">Tela cheia</button>
       <button class="btn ghost" id="resetBox">Reposicionar caixa do texto</button>
     </div>
     <p class="note">Dicas: toque no texto para pausar/continuar; arraste o texto para cima/baixo para ajustar onde está.
@@ -352,24 +367,70 @@
   // ---------- Câmera ----------
   let stream = null;
   const QUAL = {720:[1280,720], 1080:[1920,1080], 2160:[3840,2160]};
+  // Áudio fica separado: assim a câmera pode reiniciar sem pedir o microfone de novo
+  let audioStream = null, needCrop = false;
+  function videoDims(){
+    return new Promise(res => {
+      let n = 0;
+      const check = () => {
+        if (cam.videoWidth && cam.videoHeight) return res([cam.videoWidth, cam.videoHeight]);
+        if (++n > 40) return res([0,0]);
+        setTimeout(check, 50);
+      };
+      check();
+    });
+  }
   async function startCamera(){
-    if (stream) stream.getTracks().forEach(t => t.stop());
+    if (stream) stream.getVideoTracks().forEach(t => t.stop());
+    if (!audioStream){
+      try { audioStream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true, noiseSuppression:true}}); }
+      catch(e){ audioStream = null; toast('Sem microfone: o vídeo vai sair sem som'); }
+    }
     const [w,h] = QUAL[S.quality] || QUAL[1080];
     const portrait = orient() === 'portrait';
-    const video = { facingMode: S.facing, width:{ideal: portrait ? h : w}, height:{ideal: portrait ? w : h},
-                    aspectRatio:{ideal: portrait ? h/w : w/h}, frameRate:{ideal:30} };
     lastOrient = orient();
-    const audio = { echoCancellation:true, noiseSuppression:true };
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({video, audio});
-    } catch (e) {
-      // tenta de novo com o mínimo
-      stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:S.facing}, audio:true});
+    // Tentativas: o iPhone costuma girar sozinho com as medidas "deitadas";
+    // outros aparelhos precisam das medidas trocadas.
+    const tries = [
+      {width:{ideal:w}, height:{ideal:h}},
+      {width:{ideal:h}, height:{ideal:w}},
+      {}
+    ];
+    let vs = null, matched = false;
+    for (let i = 0; i < tries.length; i++){
+      let cand;
+      try { cand = await navigator.mediaDevices.getUserMedia({video:{facingMode:S.facing, frameRate:{ideal:30}, ...tries[i]}}); }
+      catch(e){ if (i === tries.length-1 && !vs) throw e; continue; }
+      cam.srcObject = null; cam.srcObject = cand;
+      try { await cam.play(); } catch(e){}
+      const [vw, vh] = await videoDims();
+      if (vs) vs.getTracks().forEach(t => t.stop());
+      vs = cand;
+      if (vw && (vh > vw) === portrait){ matched = true; break; }
     }
-    cam.srcObject = stream;
+    needCrop = !matched;   // se o aparelho insistir na orientação errada, o vídeo é recortado na gravação
+    stream = new MediaStream([...vs.getVideoTracks(), ...(audioStream ? audioStream.getAudioTracks() : [])]);
+    cam.srcObject = vs;
     cam.classList.toggle('mirror', S.facing === 'user');
     try { await cam.play(); } catch(e){}
   }
+
+  // Recorte via canvas (só usado se a câmera não girar sozinha)
+  let cropRAF = null;
+  function croppedStream(){
+    const vw = cam.videoWidth, vh = cam.videoHeight, portrait = orient() === 'portrait';
+    const tw = portrait ? Math.round(Math.min(vw, vh) * 9/16) : Math.min(vw, vh*16/9);
+    const th = portrait ? Math.min(vw, vh) : Math.round(tw * 9/16);
+    const c = document.createElement('canvas'); c.width = tw & ~1; c.height = th & ~1;
+    const ctx = c.getContext('2d');
+    const sx = (vw - c.width)/2, sy = (vh - c.height)/2;
+    const draw = () => { ctx.drawImage(cam, sx, sy, c.width, c.height, 0, 0, c.width, c.height); cropRAF = requestAnimationFrame(draw); };
+    draw();
+    const out = c.captureStream(30);
+    if (audioStream) audioStream.getAudioTracks().forEach(t => out.addTrack(t));
+    return out;
+  }
+
 
   let wakeLock = null;
   async function keepAwake(){ try{ if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); }catch(e){} }
@@ -381,6 +442,7 @@
       err.innerHTML = 'Este navegador não liberou a câmera. O site precisa estar aberto por um endereço <b>https://</b> (não funciona abrindo o arquivo direto). No iPhone, use o Safari.';
       return;
     }
+    if (canFS) goFullscreen();
     try {
       await startCamera();
       $('start').classList.remove('show');
@@ -429,10 +491,11 @@
     await countdown(+S.cd);
     chunks = [];
     const bps = S.quality >= 2160 ? 20e6 : S.quality >= 1080 ? 8e6 : 4e6;
+    const recStream = needCrop && HTMLCanvasElement.prototype.captureStream ? croppedStream() : stream;
     try {
-      recorder = new MediaRecorder(stream, mime ? {mimeType: mime, videoBitsPerSecond: bps} : {videoBitsPerSecond: bps});
+      recorder = new MediaRecorder(recStream, mime ? {mimeType: mime, videoBitsPerSecond: bps} : {videoBitsPerSecond: bps});
     } catch(e) {
-      recorder = new MediaRecorder(stream);
+      recorder = new MediaRecorder(recStream);
     }
     recorder.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
     recorder.onstop = finishRecording;
@@ -447,6 +510,7 @@
 
   function finishRecording(){
     clearInterval(timerI);
+    if (cropRAF){ cancelAnimationFrame(cropRAF); cropRAF = null; }
     $('rec').classList.remove('on'); $('timer').classList.remove('show');
     setPlaying(false);
     const type = (recorder.mimeType || chunks[0]?.type || 'video/mp4').split(';')[0];
@@ -509,6 +573,21 @@
   };
   $('closeSettings').onclick = () => { $('settings').classList.remove('show'); renderText(); };
   $('resetBox').onclick = () => { geo[orient()] = {...DEFAULT_GEO[orient()]}; store.set('geo', geo); applyGeo(); toast('Caixa reposicionada'); };
+
+  // ---------- Tela cheia ----------
+  const isIOS = /iP(hone|od|ad)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const standalone = window.navigator.standalone === true || matchMedia('(display-mode: standalone), (display-mode: fullscreen)').matches;
+  const canFS = !!(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen) && !isIOS;
+  function goFullscreen(){
+    const el = document.documentElement;
+    try { const p = (el.requestFullscreen || el.webkitRequestFullscreen).call(el, {navigationUI:'hide'}); if (p && p.catch) p.catch(()=>{}); } catch(e){}
+  }
+  if (isIOS && !standalone) $('iosTip').classList.add('show');
+  $('fsBtn').style.display = (canFS || (isIOS && !standalone)) ? '' : 'none';
+  $('fsBtn').onclick = () => {
+    if (canFS) { goFullscreen(); $('settings').classList.remove('show'); }
+    else toast('No iPhone: Compartilhar → Adicionar à Tela de Início, e abra pelo ícone', 5000);
+  };
 
   // ---------- Início ----------
   renderText(); spdLabel(); setPlaying(false); applyGeo();
