@@ -99,18 +99,42 @@
     -webkit-user-select:text;user-select:text}
   .overlay.show{display:block}
   #start.show{display:flex}
-  #start{flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:16px}
-  #start > h1{margin-top:auto !important}
-  #start{background:#000}
-  #start h1{margin:0;font-size:28px}
-  #start p{margin:0;opacity:.75;max-width:420px;line-height:1.45}
+  #start{flex-direction:column;background:#000;padding:calc(24px + var(--sat)) calc(24px + var(--sar)) calc(18px + var(--sab)) calc(24px + var(--sal))}
+  .st-main{flex:1;width:100%;max-width:360px;margin:0 auto;display:flex;flex-direction:column;justify-content:center}
+  .logo{width:56px;height:56px;border-radius:15px;background:#1c1c1e;display:grid;place-items:center;margin-bottom:22px}
+  .logo svg{width:30px;height:30px}
+  #start h1{margin:0;font-size:34px;font-weight:700;letter-spacing:-.03em}
+  .st-sub{margin:8px 0 0;color:#8e8e93;font-size:17px;line-height:1.4}
+  .steps{list-style:none;margin:34px 0 0;padding:0;display:flex;flex-direction:column;gap:16px}
+  .steps li{display:flex;align-items:center;gap:14px;font-size:16px;color:#e5e5ea}
+  .steps li span{width:26px;height:26px;border-radius:50%;border:1px solid #3a3a3c;display:grid;place-items:center;font-size:13px;color:#8e8e93;flex:none}
+  .st-bottom{width:100%;max-width:360px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+  .go{width:100%;height:56px;display:flex;align-items:center;justify-content:center;gap:10px;background:#fff;color:#000;
+    font-weight:600;font-size:17px;border-radius:16px;transition:transform .1s, opacity .2s}
+  .go:active{transform:scale(.98)}
+  .go:disabled{opacity:.6}
+  .go svg{width:20px;height:20px}
+  .st-hint{margin:0;color:#636366;font-size:13px;text-align:center;line-height:1.4}
+  .st-links{display:flex;justify-content:center;gap:18px;margin-top:2px}
+  .linkbtn{color:#8e8e93;font-size:14px;padding:6px 2px}
+  .linkbtn:active{color:#fff}
+  .help-card{display:none;width:100%;text-align:left;background:#1c1c1e;border-radius:14px;padding:14px 16px;line-height:1.5;font-size:14px;color:#d1d1d6;margin-top:24px}
+  .help-card.show{display:block}
+  .st-bottom .help-card{margin-top:0}
+  .help-card h4{margin:0 0 6px;font-size:15px;font-weight:600;color:#fff;display:flex;gap:8px;align-items:center}
+  .help-card h4::before{content:"";width:8px;height:8px;border-radius:50%;background:#636366;flex:none}
+  .help-card.warn h4::before{background:#ff9f0a}
+  .help-card ol{margin:6px 0 0;padding-left:18px}
+  .help-card b{color:#fff;font-weight:600}
+  #allowHint{position:fixed;inset:0;z-index:60;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+    background:rgba(0,0,0,.5);pointer-events:none;text-align:center;font-size:16px;font-weight:500;padding:30px}
+  #allowHint.show{display:flex}
+  #allowHint .arrow{width:10px;height:10px;border-radius:50%;background:#fff;animation:bob 1s ease-in-out infinite}
+  @keyframes bob{50%{transform:translateY(-8px);opacity:.5}}
   .btn{background:#fff;color:#000;font-weight:600;padding:14px 22px;border-radius:14px;font-size:17px}
   .btn.ghost{background:rgba(255,255,255,.14);color:#fff}
   .btn.red{background:var(--red);color:#fff}
   .err{color:#ff8a80;max-width:440px;line-height:1.45}
-  .tip{max-width:420px;background:rgba(255,255,255,.1);border-radius:14px;padding:14px 16px;text-align:left;line-height:1.5;font-size:15px;display:none}
-  .tip.show{display:block}
-  .tip b{white-space:nowrap}
   html,body{height:100%;min-height:-webkit-fill-available}
 
   #review .wrap{max-width:640px;margin:0 auto}
@@ -175,9 +199,21 @@
 
   #review video{width:100%;max-height:58vh;border-radius:12px;background:#000;display:block}
   #review .meta{opacity:.65;font-size:14px;margin-top:8px}
-  #toast{position:fixed;left:50%;bottom:calc(110px + var(--sab));transform:translateX(-50%);z-index:40;
-    background:rgba(30,30,30,.95);padding:10px 16px;border-radius:12px;font-size:14px;display:none;max-width:90vw;text-align:center}
-  #toast.show{display:block}
+  #toast{position:fixed;left:50%;top:calc(12px + var(--sat));z-index:70;display:flex;align-items:center;gap:10px;
+    width:max-content;max-width:min(92vw,420px);padding:10px 16px 10px 10px;border-radius:22px;
+    background:rgba(28,28,30,.82);backdrop-filter:blur(20px) saturate(1.6);-webkit-backdrop-filter:blur(20px) saturate(1.6);
+    box-shadow:0 8px 30px rgba(0,0,0,.35), 0 0 0 .5px rgba(255,255,255,.12);
+    font-size:14px;font-weight:500;line-height:1.3;color:#fff;
+    opacity:0;transform:translate(-50%,-140%) scale(.96);pointer-events:none;
+    transition:transform .38s cubic-bezier(.2,.9,.3,1.2), opacity .25s}
+  #toast.show{opacity:1;transform:translate(-50%,0) scale(1);pointer-events:auto}
+  #toast.rec{top:calc(48px + var(--sat))}
+  #toast .ti{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;flex:none;background:#3a3a3c}
+  #toast .ti svg{width:15px;height:15px;stroke-width:2.6}
+  #toast.success .ti{background:#30d158;color:#000}
+  #toast.warn .ti{background:#ff9f0a;color:#000}
+  #toast.error .ti{background:#ff453a;color:#fff}
+  #toast .tm{min-width:0}
   .side{display:flex;gap:14px;align-items:center}
   @media (orientation:landscape){ .side{flex-direction:column} }
   #histBtn{width:52px;height:52px;border-radius:12px;overflow:hidden;background:rgba(0,0,0,.45) center/cover no-repeat;
@@ -222,15 +258,59 @@
   #cfNo{background:#2c2c2e}
   #cfYes{background:var(--red);color:#fff;font-variant-numeric:tabular-nums}
   #cfYes:disabled{opacity:.45}
-  .credits{margin-top:auto;padding-top:20px;font-size:13px;color:#8e8e93;text-align:center;line-height:1.8}
-  .credits b{color:#fff}
-  .credits nav button{color:#8e8e93;text-decoration:underline;font-size:13px;padding:2px}
+  .credits{margin-top:18px;font-size:12px;color:#48484a;text-align:center;line-height:1.9}
+  .credits b{color:#8e8e93;font-weight:500}
+  .credits nav button{color:#48484a;font-size:12px;padding:2px}
   .overlay.doc{z-index:45;background:#0c0c0d}
   .doc .wrap{max-width:640px;margin:0 auto;line-height:1.55;font-size:15px;color:#ddd}
   .doc h3{color:#fff;font-size:16px;margin:22px 0 6px}
   .doc p{margin:0 0 10px}
   .doc ul{padding-left:20px;margin:0 0 10px}
   .doc .upd{color:#8e8e93;font-size:13px}
+  .fs-card{width:100%;display:flex;align-items:center;gap:12px;text-align:left;background:#1c1c1e;border-radius:16px;padding:12px 14px;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+  .fs-card:active{background:#242426}
+  .fs-ic{width:38px;height:38px;border-radius:11px;background:#0a84ff;color:#fff;display:grid;place-items:center;flex:none}
+  .fs-ic svg{width:20px;height:20px}
+  .fs-tx{flex:1;min-width:0}
+  .fs-tx b{display:block;font-size:15px;font-weight:600}
+  .fs-tx small{display:block;font-size:13px;color:#8e8e93;margin-top:1px}
+  .fs-go{font-size:14px;font-weight:600;color:#0a84ff;flex:none}
+
+  #fsTut{z-index:55;background:#000;padding:calc(28px + var(--sat)) calc(22px + var(--sar)) calc(20px + var(--sab)) calc(22px + var(--sal))}
+  .tut{max-width:400px;margin:0 auto;min-height:100%;display:flex;flex-direction:column}
+  .tut-head{text-align:center}
+  .tut-badge{width:56px;height:56px;border-radius:16px;background:#0a84ff;display:grid;place-items:center;margin:0 auto 16px}
+  .tut-badge svg{width:28px;height:28px}
+  .tut h2{margin:0;font-size:26px;letter-spacing:-.02em}
+  .tut-head p{margin:10px 0 0;color:#a1a1a6;font-size:15px;line-height:1.45}
+  .tut-head p b{color:#fff;font-weight:600}
+  .tut-steps{list-style:none;margin:26px 0 0;padding:0;display:none;flex-direction:column;gap:18px}
+  .tut-steps.show{display:flex}
+  .tut-steps li{display:flex;gap:14px}
+  .tut-steps .n{width:26px;height:26px;border-radius:50%;background:#fff;color:#000;font-size:13px;font-weight:700;display:grid;place-items:center;flex:none;margin-top:1px}
+  .tut-steps b{display:block;font-size:16px;font-weight:600}
+  .tut-steps small{display:block;color:#8e8e93;font-size:13px;margin-top:2px;line-height:1.4}
+  .tut-steps small b{display:inline;font-size:13px;color:#d1d1d6}
+  .tut-steps li > div{flex:1;min-width:0}
+  .mock{margin-top:10px}
+  .mk-bar{display:flex;align-items:center;gap:8px;background:#1c1c1e;border-radius:99px;padding:6px 6px 6px 14px;font-size:12px;color:#8e8e93}
+  .mk-bar i{width:10px;height:10px;border-radius:50%;border:1.5px solid #636366;flex:none}
+  .mk-addr{flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+  .mk-btn{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#0a84ff;flex:none}
+  .mk-btn svg{width:18px;height:18px}
+  .mk-row{display:flex;align-items:center;justify-content:space-between;background:#1c1c1e;border-radius:12px;padding:11px 14px;font-size:14px}
+  .mk-ic svg{width:20px;height:20px}
+  .mk-sw{width:38px;height:23px;border-radius:99px;background:#30d158;position:relative}
+  .mk-sw::after{content:"";position:absolute;right:2px;top:2px;width:19px;height:19px;border-radius:50%;background:#fff}
+  .mk-app{display:inline-flex;flex-direction:column;align-items:center;gap:5px;font-size:11px;color:#d1d1d6}
+  .mk-icon{width:50px;height:50px;border-radius:13px;background:#1c1c1e;display:grid;place-items:center;box-shadow:inset 0 0 0 1px rgba(255,255,255,.1)}
+  .mk-icon svg{width:28px;height:28px}
+  .hl{box-shadow:0 0 0 2px #0a84ff;animation:hl 1.6s ease-in-out infinite}
+  @keyframes hl{50%{box-shadow:0 0 0 4px rgba(10,132,255,.45)}}
+  .tut-note{margin:22px 0 0;color:#636366;font-size:12px;text-align:center;line-height:1.4}
+  #installBtn{margin-top:20px}
+  .tut-acts{margin-top:auto;padding-top:22px;display:flex;flex-direction:column;align-items:center;gap:6px}
   #reviewActions{display:none}
   #reviewActions.show{display:block}
   #saving{position:fixed;inset:0;z-index:35;display:none;place-items:center;background:rgba(0,0,0,.75);text-align:center;font-size:16px}
@@ -290,17 +370,41 @@
 
 <!-- Tela inicial -->
 <div class="overlay show" id="start">
-  <h1>Teleprompter</h1>
-  <p>Grave vídeos lendo seu texto na tela. O texto <b>não aparece</b> no vídeo gravado.</p>
-  <button class="btn" id="startBtn">Ativar câmera e microfone</button>
-  <button class="btn ghost" id="startHist" style="display:none">Ver vídeos gravados</button>
-  <div class="err" id="startErr"></div>
-  <div class="tip" id="iosTip">
-    <b>Para usar em tela cheia no iPhone:</b><br>
-    1. Toque em <b>Compartilhar</b> (quadrado com seta ↑) no Safari<br>
-    2. Toque em <b>Adicionar à Tela de Início</b><br>
-    3. Abra o <b>Teleprompter</b> pelo ícone que aparecer — ele abre sem as barras do Safari.
+  <div class="st-main">
+    <div class="logo"><svg viewBox="0 0 24 24" stroke="#fff" stroke-width="2"><path d="M5 8h14M5 12h14M5 16h7"/><circle cx="17.5" cy="16" r="2.5" fill="#ff3b30" stroke="none"/></svg></div>
+    <h1>Teleprompter</h1>
+    <p class="st-sub">Grave vídeos lendo o seu roteiro na tela.</p>
+
+    <ol class="steps">
+      <li><span>1</span>Cole o seu texto</li>
+      <li><span>2</span>Grave lendo na tela</li>
+      <li><span>3</span>Salve no celular</li>
+    </ol>
+
+    <!-- aviso: navegador de dentro de app (Instagram, TikTok...) -->
+    <div class="help-card warn" id="inAppCard">
+      <h4>Abra no Safari ou Chrome</h4>
+      Este app bloqueia a câmera. Toque em <b>•••</b> no canto da tela e escolha <b>Abrir no navegador</b>.
+    </div>
   </div>
+
+  <div class="st-bottom">
+    <button class="fs-card" id="fsCard">
+      <span class="fs-ic"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></span>
+      <span class="fs-tx"><b>Recomendado: use em tela cheia</b><small>Para a melhor experiência na gravação</small></span>
+      <span class="fs-go">Ver como</span>
+    </button>
+    <div class="help-card warn" id="startErr"></div>
+    <button class="go" id="startBtn">
+      <svg viewBox="0 0 24 24"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+      <span id="startLbl">Começar</span>
+    </button>
+    <p class="st-hint" id="startHint">O celular vai pedir acesso à câmera — toque em Permitir.</p>
+    <div class="st-links">
+      <button class="linkbtn" id="startHist" style="display:none">Vídeos gravados</button>
+    </div>
+  </div>
+
   <footer class="credits">
     <div>Desenvolvido por <b>Sampaio</b></div>
     <nav><button data-doc="docTerms">Termos de uso</button> · <button data-doc="docPrivacy">Privacidade</button> · <button data-doc="docAbout">Sobre</button></nav>
@@ -498,7 +602,61 @@
     <div class="acts"><button id="cfNo">Cancelar</button><button id="cfYes" disabled>Deletar (5)</button></div>
   </div>
 </div>
-<div id="toast"></div>
+<!-- Tutorial: tela cheia -->
+<div class="overlay" id="fsTut">
+  <div class="tut">
+    <div class="tut-head">
+      <span class="tut-badge"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></span>
+      <h2>Use em tela cheia</h2>
+      <p>Para a melhor experiência, instale o Teleprompter na Tela de Início. Ele abre como um app, <b>sem as barras do navegador</b> e com a tela inteira para gravar.</p>
+    </div>
+
+    <!-- iPhone -->
+    <ol class="tut-steps" id="tutIOS">
+      <li>
+        <span class="n">1</span>
+        <div><b>Toque em Compartilhar</b><small>Na barra do Safari. No iOS 26, ela fica dentro do botão <b>•••</b></small>
+          <div class="mock"><span class="mk-bar"><i></i><span class="mk-addr">teleprompter.vercel.app</span><span class="mk-btn hl"><svg viewBox="0 0 24 24"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg></span></span></div>
+        </div>
+      </li>
+      <li>
+        <span class="n">2</span>
+        <div><b>Toque em “Adicionar à Tela de Início”</b><small>Se não aparecer, role a lista para baixo</small>
+          <div class="mock"><span class="mk-row hl">Adicionar à Tela de Início <span class="mk-ic"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8v8M8 12h8"/></svg></span></span></div>
+        </div>
+      </li>
+      <li>
+        <span class="n">3</span>
+        <div><b>Toque em “Adicionar”</b><small>Deixe ligado “Abrir como App Web”, se aparecer</small>
+          <div class="mock"><span class="mk-row">Abrir como App Web <span class="mk-sw"></span></span></div>
+        </div>
+      </li>
+      <li>
+        <span class="n">4</span>
+        <div><b>Abra pelo ícone na Tela de Início</b><small>A partir de agora, use sempre por ele</small>
+          <div class="mock"><span class="mk-app"><span class="mk-icon"><svg viewBox="0 0 24 24" stroke="#fff" stroke-width="2"><path d="M5 8h14M5 12h14M5 16h7"/><circle cx="17.5" cy="16" r="2.5" fill="#ff3b30" stroke="none"/></svg></span>Teleprompter</span></div>
+        </div>
+      </li>
+    </ol>
+
+    <!-- Android -->
+    <ol class="tut-steps" id="tutAndroid">
+      <li><span class="n">1</span><div><b>Toque em ⋮</b><small>No canto de cima do Chrome</small></div></li>
+      <li><span class="n">2</span><div><b>Toque em “Instalar app”</b><small>Ou “Adicionar à tela inicial”</small></div></li>
+      <li><span class="n">3</span><div><b>Abra pelo ícone</b><small>Ele abre em tela cheia, como um app</small></div></li>
+    </ol>
+    <button class="go" id="installBtn" style="display:none">Instalar agora</button>
+
+    <p class="tut-note">Os vídeos gravados pelo app ficam separados dos gravados pelo navegador.</p>
+    <div class="tut-acts">
+      <button class="go" id="tutOk">Entendi</button>
+      <button class="linkbtn" id="tutLater">Agora não</button>
+    </div>
+  </div>
+</div>
+
+<div id="allowHint"><div class="arrow"></div><div>Toque em <b>Permitir</b></div></div>
+<div id="toast" role="status" aria-live="polite"><span class="ti"></span><span class="tm"></span></div>
 
 <script>
 (() => {
@@ -537,7 +695,27 @@
 
   // ---------- Toast ----------
   let toastT;
-  function toast(msg, ms=2600){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'), ms); }
+  const TOAST_ICONS = {
+    success: '<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+    warn:    '<svg viewBox="0 0 24 24"><path d="M12 7v6M12 17h.01"/></svg>',
+    error:   '<svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg>',
+    info:    '<svg viewBox="0 0 24 24"><path d="M12 11v6M12 7h.01"/></svg>',
+  };
+  // toast(mensagem, tipo = 'info' | 'success' | 'warn' | 'error', duração)
+  function toast(msg, type='info', ms){
+    if (typeof type === 'number'){ ms = type; type = 'info'; }
+    const t = $('toast');
+    t.querySelector('.tm').textContent = msg;
+    t.querySelector('.ti').innerHTML = TOAST_ICONS[type] || TOAST_ICONS.info;
+    let isRec = false; try { isRec = !!(recorder && recorder.state === 'recording'); } catch(e){}
+    t.className = type + (isRec ? ' rec' : '');
+    void t.offsetWidth;   // reinicia a animação
+    t.classList.add('show');
+    if (navigator.vibrate && (type === 'error' || type === 'warn')) { try { navigator.vibrate(30); } catch(e){} }
+    clearTimeout(toastT);
+    toastT = setTimeout(() => t.classList.remove('show'), ms || Math.min(5000, 1800 + msg.length * 45));
+  }
+  $('toast').onclick = () => { clearTimeout(toastT); $('toast').classList.remove('show'); };
 
   // ---------- Texto ----------
   function renderText(){
@@ -601,9 +779,9 @@
     applyGeo();
     const o = orient();
     if (o === lastOrient || !stream) return;
-    if (recorder && recorder.state === 'recording'){ toast('Gire de volta: a orientação não muda durante a gravação'); return; }
+    if (recorder && recorder.state === 'recording'){ toast('Gire de volta — a orientação fica travada durante a gravação', 'warn'); return; }
     lastOrient = o;
-    startCamera().catch(() => toast('Não consegui ajustar a câmera'));
+    startCamera().catch(() => toast('Não consegui ajustar a câmera', 'error'));
   }
   addEventListener('resize', () => { applyGeo(); clearTimeout(rT); rT = setTimeout(onRotate, 350); });
   addEventListener('orientationchange', () => { clearTimeout(rT); rT = setTimeout(onRotate, 500); });
@@ -676,7 +854,7 @@
     if (stream) stream.getVideoTracks().forEach(t => t.stop());
     if (!audioStream){
       try { audioStream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true, noiseSuppression:true}}); }
-      catch(e){ audioStream = null; toast('Sem microfone: o vídeo vai sair sem som'); }
+      catch(e){ audioStream = null; setTimeout(() => toast('Sem microfone — o vídeo vai sair sem som', 'warn'), 800); }
     }
     const portrait = orient() === 'portrait';
     lastOrient = orient();
@@ -766,9 +944,9 @@
         const b = document.createElement('button'); b.textContent = name; b.title = d.label;
         if (d.deviceId === curId) b.classList.add('on');
         b.onclick = async () => {
-          if (recorder && recorder.state === 'recording') return toast('Pare a gravação para trocar de lente');
+          if (recorder && recorder.state === 'recording') return toast('Pare a gravação para trocar de lente', 'warn');
           S.lens[S.facing] = d.deviceId; store.set('lens', S.lens);
-          try { await startCamera(); toast(d.label); } catch(e){ toast('Não deu para usar essa lente'); }
+          try { await startCamera(); toast('Lente ' + lensName(d.label), 'success'); } catch(e){ toast('Não deu para usar essa lente', 'error'); }
         };
         box.appendChild(b);
       }
@@ -819,7 +997,7 @@
     if (!camWasOn || stream) return;
     camWasOn = false;
     try { await startCamera(); keepAwake(); }
-    catch(e){ camWasOn = true; toast('Toque na tela para religar a câmera'); }
+    catch(e){ camWasOn = true; toast('Toque na tela para religar a câmera', 'info'); }
   }
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') releaseCamera(); else resumeCamera();
@@ -828,27 +1006,51 @@
   addEventListener('pageshow', () => { if (document.visibilityState === 'visible') resumeCamera(); });
   document.addEventListener('pointerdown', () => { if (camWasOn && document.visibilityState === 'visible') resumeCamera(); }, true);
 
+  function showStartError(title, steps){
+    const e = $('startErr');
+    e.innerHTML = `<h4>${title}</h4>` + (steps.length ? '<ol>' + steps.map(x => `<li>${x}</li>`).join('') + '</ol>' : '');
+    e.classList.add('show');
+    $('startHint').style.display = 'none';
+    $('startLbl').textContent = 'Tentar de novo';
+  }
   $('startBtn').onclick = async () => {
-    const err = $('startErr'); err.textContent = '';
+    const btn = $('startBtn');
+    $('startErr').classList.remove('show');
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
-      err.innerHTML = 'Este navegador não liberou a câmera. O site precisa estar aberto por um endereço <b>https://</b> (não funciona abrindo o arquivo direto). No iPhone, use o Safari.';
-      return;
+      if (inApp) return showStartError('Abra no Safari ou Chrome', ['Toque em <b>•••</b> no canto da tela', 'Escolha <b>Abrir no navegador</b>']);
+      return showStartError('Este navegador não liberou a câmera', ['Abra o site no <b>Safari</b> (iPhone) ou no <b>Chrome</b> (Android)', 'Confira se o endereço começa com <b>https://</b>']);
     }
     if (canFS) goFullscreen();
+    btn.disabled = true; $('startLbl').textContent = 'Abrindo câmera…';
+    const hintT = setTimeout(() => $('allowHint').classList.add('show'), 600);   // só aparece se o aviso de permissão abrir
     try {
       await startCamera();
       $('start').classList.remove('show');
       keepAwake();
       applyGeo();
     } catch (e) {
-      err.textContent = 'Não consegui acessar a câmera: ' + (e.name === 'NotAllowedError' ? 'permissão negada. Libere câmera e microfone nas configurações do navegador e tente de novo.' : (e.message || e.name));
+      if (e.name === 'NotAllowedError' || e.name === 'SecurityError'){
+        showStartError('A câmera foi bloqueada', isIOS
+          ? ['Toque em <b>aA</b> na barra de endereço', 'Toque em <b>Ajustes do Site</b>', 'Em <b>Câmera</b> e <b>Microfone</b>, escolha <b>Permitir</b>', 'Volte aqui e toque em <b>Tentar de novo</b>']
+          : ['Toque no <b>cadeado</b> ao lado do endereço', 'Libere <b>Câmera</b> e <b>Microfone</b>', 'Volte aqui e toque em <b>Tentar de novo</b>']);
+      } else if (e.name === 'NotReadableError' || e.name === 'AbortError'){
+        showStartError('A câmera está sendo usada por outro app', ['Feche outros apps que usam a câmera (FaceTime, WhatsApp, Instagram…)', 'Toque em <b>Tentar de novo</b>']);
+      } else if (e.name === 'NotFoundError' || e.name === 'OverconstrainedError'){
+        showStartError('Não encontrei uma câmera', ['Confira se o aparelho tem câmera disponível', 'Toque em <b>Tentar de novo</b>']);
+      } else {
+        showStartError('Não consegui abrir a câmera', ['Recarregue a página', 'Toque em <b>Tentar de novo</b>']);
+      }
+    } finally {
+      clearTimeout(hintT); $('allowHint').classList.remove('show');
+      btn.disabled = false;
+      if (!$('startErr').classList.contains('show')) $('startLbl').textContent = 'Começar';
     }
   };
 
   $('flip').onclick = async () => {
-    if (recorder && recorder.state === 'recording') return toast('Pare a gravação para trocar de câmera');
+    if (recorder && recorder.state === 'recording') return toast('Pare a gravação para trocar de câmera', 'warn');
     S.facing = S.facing === 'user' ? 'environment' : 'user'; save('facing');
-    try { await startCamera(); } catch(e){ toast('Não deu para trocar de câmera'); }
+    try { await startCamera(); } catch(e){ toast('Não deu para trocar de câmera', 'error'); }
   };
 
   // ---------- Armazenamento em disco (IndexedDB) ----------
@@ -934,7 +1136,7 @@
     if (recorder && recorder.state === 'recording'){ recorder.stop(); return; }
     if (!stream) return;
     const mime = pickMime();
-    if (mime === null){ toast('Seu navegador não suporta gravação de vídeo'); return; }
+    if (mime === null){ toast('Este navegador não grava vídeo', 'error'); return; }
     busy = true;
     if (S.restartOnRec){ offset = 0; applyOffset(); }
     setPlaying(false);
@@ -942,7 +1144,7 @@
     useDisk = false; diskFail = false; writeQ = Promise.resolve(); recBytes = 0;
     try { await RecDB.open(); useDisk = true; } catch(e){ useDisk = false; }
     const free = await hasRoom();
-    if (free !== null && free < 300) toast('Pouco espaço livre para o site: vídeos longos podem não caber', 4000);
+    if (free !== null && free < 300) toast('Pouco espaço livre — vídeos longos podem não caber', 'warn', 4500);
     await countdown(+S.cd);
     chunks = []; recSid = String(Date.now()); recSeq = 0;
     // taxa de bits proporcional à resolução real (≈ 4K: 40 Mbps, 1080p: 10 Mbps)
@@ -1011,7 +1213,7 @@
     } else {
       // sem armazenamento: só dá para revisar agora (não entra no histórico)
       const parts = chunks; chunks = [];
-      if (!parts.length){ toast('Não consegui salvar o vídeo. Tente gravar de novo.', 4000); return; }
+      if (!parts.length){ toast('Não consegui salvar o vídeo. Tente de novo.', 'error', 4500); return; }
       openVideo({sid:null, type:(recorder.mimeType||'video/mp4').split(';')[0], date:Date.now(), duration:secs, parts}, true);
     }
   }
@@ -1130,7 +1332,7 @@
     return list;
   }
   async function openHistory(){
-    if (recorder && recorder.state === 'recording') return toast('Pare a gravação para ver os vídeos');
+    if (recorder && recorder.state === 'recording') return toast('Pare a gravação para ver os vídeos', 'warn');
     setPlaying(false);
     const list = await refreshHistBtn();
     const box = $('histList'); box.innerHTML = '';
@@ -1153,7 +1355,7 @@
         e.stopPropagation();
         if (!(await confirmDelete())) return;
         try { await RecDB.remove(m.sid); } catch(err){}
-        toast('Vídeo deletado');
+        toast('Vídeo deletado', 'success');
         openHistory();
       };
       row.append(th, info, del);
@@ -1203,7 +1405,7 @@
   function download(){
     const a = document.createElement('a'); a.href = lastUrl; a.download = lastName;
     document.body.appendChild(a); a.click(); a.remove();
-    toast('Download iniciado: ' + lastName);
+    toast('Download iniciado', 'success');
   }
   function closeReview(){
     loadToken++;
@@ -1220,7 +1422,7 @@
     closeReview();
     if (sid){ try { await RecDB.remove(sid); } catch(e){} }
     refreshHistBtn();
-    toast('Vídeo deletado');
+    toast('Vídeo deletado', 'success');
   };
 
   // ---------- Ajustes ----------
@@ -1272,10 +1474,10 @@
   $('pasteBtn').onclick = async () => {
     try {
       const t = await navigator.clipboard.readText();
-      if (!t) return toast('Nada para colar');
+      if (!t) return toast('Nada para colar', 'warn');
       S.text = t; save('text'); $('script').value = t; renderText(); updateInfo(); offset = 0; applyOffset();
-      toast('Texto colado');
-    } catch(e){ toast('Toque e segure no campo de texto e escolha “Colar”'); }
+      toast('Texto colado', 'success');
+    } catch(e){ toast('Toque e segure no texto e escolha “Colar”', 'info'); }
   };
   let clearArm = null;
   $('clearBtn').onclick = () => {
@@ -1285,11 +1487,11 @@
     S.text = ''; save('text'); $('script').value = ''; renderText(); updateInfo(); $('script').focus();
   };
   $('openSettings').onclick = () => {
-    if (recorder && recorder.state === 'recording') return toast('Pare a gravação para abrir os ajustes');
+    if (recorder && recorder.state === 'recording') return toast('Pare a gravação para abrir os ajustes', 'warn');
     setPlaying(false); syncSettingsUI(); $('settings').classList.add('show');
   };
   $('closeSettings').onclick = () => { $('script').blur(); $('settings').classList.remove('show'); renderText(); };
-  $('resetBox').onclick = () => { geo[orient()] = {...DEFAULT_GEO[orient()]}; store.set('geo', geo); applyGeo(); $('settings').classList.remove('show'); toast('Caixa reposicionada'); };
+  $('resetBox').onclick = () => { geo[orient()] = {...DEFAULT_GEO[orient()]}; store.set('geo', geo); applyGeo(); $('settings').classList.remove('show'); toast('Caixa reposicionada', 'success'); };
 
   // ---------- Tela cheia ----------
   const isIOS = /iP(hone|od|ad)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
@@ -1299,11 +1501,37 @@
     const el = document.documentElement;
     try { const p = (el.requestFullscreen || el.webkitRequestFullscreen).call(el, {navigationUI:'hide'}); if (p && p.catch) p.catch(()=>{}); } catch(e){}
   }
-  if (isIOS && !standalone) $('iosTip').classList.add('show');
-  $('fsBtn').style.display = (canFS || (isIOS && !standalone)) ? '' : 'none';
+  const inApp = /Instagram|FBAN|FBAV|FB_IAB|musical_ly|Bytedance|TikTok|Line\/|Snapchat|Twitter|LinkedInApp|Pinterest/i.test(navigator.userAgent);
+  if (inApp) $('inAppCard').classList.add('show');
+  // Tutorial de tela cheia (instalar como app)
+  const isAndroid = /Android/i.test(navigator.userAgent);
+  const needsInstall = !standalone && (isIOS || isAndroid);
+  let installEvt = null;
+  addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; $('installBtn').style.display = ''; });
+  $('installBtn').onclick = async () => {
+    if (!installEvt) return;
+    installEvt.prompt();
+    try { const c = await installEvt.userChoice; if (c.outcome === 'accepted') closeTut(); } catch(e){}
+    installEvt = null; $('installBtn').style.display = 'none';
+  };
+  function openTut(){
+    $('tutIOS').classList.toggle('show', !isAndroid);
+    $('tutAndroid').classList.toggle('show', isAndroid);
+    $('fsTut').scrollTop = 0;
+    $('fsTut').classList.add('show');
+  }
+  function closeTut(){ $('fsTut').classList.remove('show'); store.set('tutSeen', true); }
+  $('tutOk').onclick = closeTut;
+  $('tutLater').onclick = closeTut;
+  $('fsCard').onclick = openTut;
+  $('fsCard').style.display = needsInstall && !inApp ? '' : 'none';
+  // primeira visita pelo navegador: mostra o tutorial sozinho
+  if (needsInstall && !inApp && !store.get('tutSeen', false)) setTimeout(openTut, 400);
+
+  $('fsBtn').style.display = (canFS || needsInstall) ? '' : 'none';
   $('fsBtn').onclick = () => {
-    if (canFS) { goFullscreen(); $('settings').classList.remove('show'); }
-    else toast('No iPhone: Compartilhar → Adicionar à Tela de Início, e abra pelo ícone', 5000);
+    if (needsInstall){ $('settings').classList.remove('show'); openTut(); }
+    else if (canFS) { goFullscreen(); $('settings').classList.remove('show'); }
   };
 
   // ---------- Termos / Privacidade / Sobre ----------
