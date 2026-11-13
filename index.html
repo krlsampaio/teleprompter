@@ -537,6 +537,9 @@
         <div class="item">
           <label class="lbl"><span>Sempre começar do início<small>Volta o texto para o topo a cada gravação</small></span><input type="checkbox" class="switch" id="restartOnRec"></label>
         </div>
+        <div class="item">
+          <label class="lbl"><span>Redução de ruído<small>Só para lugar barulhento. Desligado, a voz sai mais natural</small></span><input type="checkbox" class="switch" id="noiseCut"></label>
+        </div>
       </div>
 
       <div class="group-t">Tela</div>
@@ -677,6 +680,7 @@
     mirrorText: store.get('mirrorText', false),
     autoScroll: store.get('autoScroll', true),
     restartOnRec: store.get('restartOnRec', false),
+    noiseCut: store.get('noiseCut', false),
     cd: store.get('cd', 3),
     facing: store.get('facing', 'user'),
     wide: false,  // sempre 16:9
@@ -853,8 +857,14 @@
   async function startCamera(){
     if (stream) stream.getVideoTracks().forEach(t => t.stop());
     if (!audioStream){
-      try { audioStream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true, noiseSuppression:true}}); }
-      catch(e){ audioStream = null; setTimeout(() => toast('Sem microfone — o vídeo vai sair sem som', 'warn'), 800); }
+      // Sem o "modo chamada": cancelamento de eco, supressão de ruído e ganho automático
+      // deixam a voz abafada/metálica e com volume oscilando. Pedimos o microfone cru, 48 kHz.
+      const nc = !!S.noiseCut;
+      const ac = {echoCancellation:false, noiseSuppression:nc, autoGainControl:false,
+                  sampleRate:{ideal:48000}, sampleSize:{ideal:24}, channelCount:{ideal:1}};
+      try { audioStream = await navigator.mediaDevices.getUserMedia({audio:ac}); }
+      catch(e){ try { audioStream = await navigator.mediaDevices.getUserMedia({audio:true}); } catch(e2){ audioStream = null; } }
+      if (!audioStream) { setTimeout(() => toast('Sem microfone — o vídeo vai sair sem som', 'warn'), 800); }
     }
     const portrait = orient() === 'portrait';
     lastOrient = orient();
@@ -1152,7 +1162,8 @@
     const bps = Math.round(Math.min(40e6, Math.max(6e6, px * 4.8)));
     const recStream = needCrop && HTMLCanvasElement.prototype.captureStream ? croppedStream() : stream;
     try {
-      recorder = new MediaRecorder(recStream, mime ? {mimeType: mime, videoBitsPerSecond: bps} : {videoBitsPerSecond: bps});
+      const abps = 192000;   // áudio AAC/Opus em 192 kbps (o padrão do navegador costuma ser bem menor)
+      recorder = new MediaRecorder(recStream, mime ? {mimeType: mime, videoBitsPerSecond: bps, audioBitsPerSecond: abps} : {videoBitsPerSecond: bps, audioBitsPerSecond: abps});
     } catch(e) {
       recorder = new MediaRecorder(recStream);
     }
@@ -1446,7 +1457,7 @@
   function syncSettingsUI(){
     if (document.activeElement !== $('script')) $('script').value = S.text;
     for (const k in ranges){ $(k).value = S[k]; $(k+'Out').textContent = ranges[k](S[k]); }
-    ['mirrorText','autoScroll','restartOnRec'].forEach(k => $(k).checked = S[k]);
+    ['mirrorText','autoScroll','restartOnRec','noiseCut'].forEach(k => $(k).checked = S[k]);
     document.querySelectorAll('.seg').forEach(seg => {
       const v = segVal(seg.dataset.key);
       seg.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
@@ -1460,6 +1471,11 @@
   $('spdMinus').onclick = () => changeSpeed(-0.5);
   $('spdPlus').onclick  = () => changeSpeed(+0.5);
   ['mirrorText','autoScroll','restartOnRec'].forEach(k => $(k).addEventListener('change', e => { S[k] = e.target.checked; save(k); changed(); }));
+  $('noiseCut').addEventListener('change', async e => {
+    S.noiseCut = e.target.checked; save('noiseCut'); changed();
+    if (recorder && recorder.state === 'recording') return toast('Vale a partir da próxima gravação', 'info');
+    if (audioStream){ audioStream.getTracks().forEach(t => t.stop()); audioStream = null; try { await startCamera(); } catch(err){} }
+  });
   document.querySelectorAll('.seg').forEach(seg => seg.addEventListener('click', async e => {
     const b = e.target.closest('button'); if (!b) return;
     const k = seg.dataset.key; const old = S[k];
